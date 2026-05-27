@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '../styles/clipboard.css';
 import { get, post, patch, del } from '../../../shared/api/client';
 import Toolbar from '../components/Toolbar';
 import ClipboardCard from '../components/ClipboardCard';
 import ConfirmDialog from '../components/ConfirmDialog';
+
+const POLL_INTERVAL_MS = 5000;
 
 function groupByDate(items) {
   const groups = [];
@@ -88,7 +90,7 @@ export default function ClipboardLayout() {
     if (autoMonitoring) {
       pollTimerRef.current = setInterval(() => {
         captureOnce();
-      }, 2000);
+      }, POLL_INTERVAL_MS);
     }
     return () => {
       if (pollTimerRef.current) {

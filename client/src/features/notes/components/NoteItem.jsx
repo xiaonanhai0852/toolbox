@@ -10,10 +10,17 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
     onDelete(note.id);
   }
 
+  function handleDragStart(e) {
+    e.dataTransfer.setData('text/note-id', note.id.toString());
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
   return (
     <div
       className={`note-item ${isSelected ? 'selected' : ''}`}
       onClick={() => onSelect(note.id)}
+      draggable
+      onDragStart={handleDragStart}
     >
       <div className="note-item-content">
         <div className="note-item-title">{note.title || '未命名'}</div>

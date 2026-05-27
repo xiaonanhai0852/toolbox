@@ -1,10 +1,12 @@
 import SearchBar from './SearchBar';
 import NoteList from './NoteList';
-import { useAuth } from '../../../shared/context/AuthContext';
+import FolderTree from './FolderTree';
 
 export default function Sidebar({
   notes,
   selectedNoteId,
+  folders,
+  selectedFolderId,
   pagination,
   sort,
   order,
@@ -14,8 +16,10 @@ export default function Sidebar({
   onSearch,
   onSortChange,
   onPageChange,
+  onSelectFolder,
+  onFolderChange,
+  onDropNote,
 }) {
-  const { user } = useAuth();
   const { page, totalPages } = pagination;
 
   return (
@@ -43,6 +47,14 @@ export default function Sidebar({
         </button>
       </div>
 
+      <FolderTree
+        folders={folders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={onSelectFolder}
+        onFolderChange={onFolderChange}
+        onDropNote={onDropNote}
+      />
+
       <NoteList
         notes={notes}
         selectedNoteId={selectedNoteId}
@@ -68,9 +80,6 @@ export default function Sidebar({
         </div>
       )}
 
-      <div className="sidebar-footer">
-        <span className="user-info">{user?.username}</span>
-      </div>
     </div>
   );
 }

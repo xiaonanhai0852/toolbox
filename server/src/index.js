@@ -1,10 +1,13 @@
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/auth');
 const notesRoutes = require('./routes/notes');
+const foldersRoutes = require('./routes/folders');
 const clipboardRoutes = require('./routes/clipboard');
 const { errorHandler } = require('./middleware/errorHandler');
+const { authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
@@ -13,8 +16,13 @@ if (process.env.NODE_ENV !== 'production') {
 }
 app.use(express.json());
 
+// Rate limiting for auth endpoints
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/folders', foldersRoutes);
 app.use('/api/clipboard', clipboardRoutes);
 
 // Serve client build in production

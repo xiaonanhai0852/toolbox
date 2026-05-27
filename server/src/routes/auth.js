@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
@@ -7,7 +7,10 @@ const { AppError } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-router.post('/register', (req, res, next) => {
+const MIN_PASSWORD_LENGTH = 6;
+const JWT_EXPIRES_IN = '24h';
+
+router.post('/register', async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
@@ -15,8 +18,8 @@ router.post('/register', (req, res, next) => {
       throw new AppError(400, '用户名、邮箱和密码为必填项。');
     }
 
-    if (password.length < 6) {
-      throw new AppError(400, '密码长度不能少于6个字符。');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new AppError(400, `密码长度不能少于${MIN_PASSWORD_LENGTH}个字符。`);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,7 +35,7 @@ router.post('/register', (req, res, next) => {
       throw new AppError(409, '用户名或邮箱已被注册。');
     }
 
-    const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const result = db.prepare(
       'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)'
@@ -41,7 +44,7 @@ router.post('/register', (req, res, next) => {
     const token = jwt.sign(
       { userId: result.lastInsertRowid, username },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.status(201).json({
@@ -56,7 +59,7 @@ router.post('/register', (req, res, next) => {
   }
 });
 
-router.post('/login', (req, res, next) => {
+router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -66,14 +69,14 @@ router.post('/login', (req, res, next) => {
 
     const user = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?').get(email, email);
 
-    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       throw new AppError(401, '用户名/邮箱或密码错误。');
     }
 
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.json({

@@ -1,3 +1,5 @@
+﻿require('dotenv').config({ path: './server/.env' });
+
 module.exports = {
   apps: [{
     name: 'toolbox',
@@ -5,8 +7,8 @@ module.exports = {
     script: 'src/index.js',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000,
-      JWT_SECRET: 'change-me-to-a-random-secret'
+      PORT: process.env.PORT || 3000,
+      JWT_SECRET: process.env.JWT_SECRET
     }
   }]
 };

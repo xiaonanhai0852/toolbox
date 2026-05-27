@@ -11,6 +11,8 @@ export default function NotesLayout() {
   const navigate = useNavigate();
 
   const [notes, setNotes] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedNote, setSelectedNote] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
@@ -25,19 +27,29 @@ export default function NotesLayout() {
   const saveTimerRef = useRef(null);
   const selectedIdRef = useRef(null);
   const fetchIdRef = useRef(0);
+  const hasChangesRef = useRef(false);
 
   useEffect(() => {
     noteRef.current = selectedNote;
     selectedIdRef.current = selectedNote?.id;
+    hasChangesRef.current = false;
   }, [selectedNote]);
 
   const skipEffectRef = useRef(false);
+  const folderIdRef = useRef(null);
+
+  const fetchFolders = useCallback(() => {
+    get('/api/folders')
+      .then((data) => setFolders(data.folders))
+      .catch((err) => setError(err.message));
+  }, []);
 
   const fetchNotes = useCallback((overrides = {}) => {
     const id = ++fetchIdRef.current;
     const p = overrides.page ?? page;
     const s = overrides.sort ?? sort;
     const o = overrides.order ?? order;
+    const f = overrides.folder_id !== undefined ? overrides.folder_id : folderIdRef.current;
     const params = new URLSearchParams({
       page: p,
       limit: 20,
@@ -45,6 +57,7 @@ export default function NotesLayout() {
       order: o,
     });
     if (searchTerm) params.set('search', searchTerm);
+    if (f !== null && f !== undefined) params.set('folder_id', f);
 
     get(`/api/notes?${params}`)
       .then((data) => {
@@ -57,6 +70,10 @@ export default function NotesLayout() {
   }, [page, searchTerm, sort, order]);
 
   // Fetch on mount and when deps change (for search, page changes)
+  useEffect(() => {
+    fetchFolders();
+  }, [fetchFolders]);
+
   useEffect(() => {
     if (skipEffectRef.current) {
       skipEffectRef.current = false;
@@ -141,9 +158,17 @@ export default function NotesLayout() {
     };
   }, []);
 
-  function handleSelectNote(noteId) {
+  async function handleSelectNote(noteId) {
     if (selectedNote && selectedNote.id !== noteId) {
-      flushSave();
+      await flushSave();
+      if (hasChangesRef.current && selectedNote.id) {
+        try {
+          await post(`/api/notes/${selectedNote.id}/versions`);
+        } catch (err) {
+          // 忽略版本保存失败
+        }
+        hasChangesRef.current = false;
+      }
     }
     navigate(`/tools/notes/${noteId}`);
   }
@@ -183,6 +208,7 @@ export default function NotesLayout() {
   }
 
   function handleTitleChange(newTitle) {
+    hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, title: newTitle };
@@ -192,6 +218,7 @@ export default function NotesLayout() {
   }
 
   function handleContentChange(newContent) {
+    hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, content: newContent };
@@ -201,6 +228,7 @@ export default function NotesLayout() {
   }
 
   function handleFormatChange(newFormat) {
+    hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, format: newFormat };
@@ -222,6 +250,26 @@ export default function NotesLayout() {
     fetchNotes({ page: 1, sort: newSort, order: newOrder });
   }
 
+  function handleSelectFolder(folderId) {
+    setSelectedFolderId(folderId);
+    folderIdRef.current = folderId;
+    setPage(1);
+    skipEffectRef.current = true;
+    fetchNotes({ page: 1, folder_id: folderId });
+  }
+
+  async function handleDropNote(noteId, folderId) {
+    try {
+      await put(`/api/notes/${noteId}`, { folder_id: folderId });
+      fetchNotes();
+      if (selectedNote?.id === noteId) {
+        setSelectedNote((prev) => prev ? { ...prev, folder_id: folderId } : prev);
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <div className="app-layout">
       {error && (
@@ -238,6 +286,8 @@ export default function NotesLayout() {
       <Sidebar
         notes={notes}
         selectedNoteId={selectedNote?.id}
+        folders={folders}
+        selectedFolderId={selectedFolderId}
         pagination={pagination}
         sort={sort}
         order={order}
@@ -247,6 +297,9 @@ export default function NotesLayout() {
         onSearch={handleSearch}
         onSortChange={handleSortChange}
         onPageChange={setPage}
+        onSelectFolder={handleSelectFolder}
+        onFolderChange={fetchFolders}
+        onDropNote={handleDropNote}
       />
       <Editor
         note={selectedNote}

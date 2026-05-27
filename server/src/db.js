@@ -22,15 +22,28 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS folders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    parent_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
+    folder_id INTEGER,
     title TEXT NOT NULL DEFAULT 'Untitled',
     content TEXT DEFAULT '',
     format TEXT NOT NULL DEFAULT 'markdown',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS note_versions (
@@ -71,6 +84,13 @@ db.exec(
 // Add format column to existing notes table if missing
 try {
   db.exec(`ALTER TABLE notes ADD COLUMN format TEXT NOT NULL DEFAULT 'markdown'`);
+} catch (e) {
+  // column already exists
+}
+
+// Add folder_id column to existing notes table if missing
+try {
+  db.exec(`ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL`);
 } catch (e) {
   // column already exists
 }

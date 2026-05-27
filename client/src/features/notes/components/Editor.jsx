@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
 import { get, post } from '../../../shared/api/client';
+import { escapeHtml } from '../../../shared/utils/html';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -30,7 +32,7 @@ function addHeadingIds(html, headings) {
 function makeSlug(text) {
   return text
     .toLowerCase()
-    .replace(/[^\w一-鿿]+/g, '-')
+    .replace(/[^\w\u4e00-\u9fff]+/g, '-')
     .replace(/^-|-$/g, '');
 }
 
@@ -51,6 +53,9 @@ function extractHeadings(content) {
   }
   return headings;
 }
+
+const SAVE_DEBOUNCE_MS = 1000;
+const SAVED_INDICATOR_MS = 2000;
 
 export default function Editor({
   note,
@@ -75,22 +80,17 @@ export default function Editor({
   useEffect(() => {
     if (saving === false && savingRef.current === true) {
       setShowSaved(true);
-      const timer = setTimeout(() => setShowSaved(false), 2000);
+      const timer = setTimeout(() => setShowSaved(false), SAVED_INDICATOR_MS);
       return () => clearTimeout(timer);
     }
     savingRef.current = saving;
   }, [saving]);
+
   const [showVersions, setShowVersions] = useState(false);
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(null);
   const [restoring, setRestoring] = useState(false);
-
-  useEffect(() => {
-    if (textareaRef.current && note && isEditing) {
-      textareaRef.current.focus();
-    }
-  }, [note?.id, isEditing]);
 
   useEffect(() => {
     const isNew = note && !note.content && note.title === '未命名' && autoEditedRef.current !== note.id;
@@ -132,7 +132,11 @@ export default function Editor({
         return `<pre class="plaintext-preview">${escapeHtml(displayContent || '')}</pre>`;
       }
       const raw = marked.parse(displayContent || '');
-      return addHeadingIds(raw, headings);
+      const withIds = addHeadingIds(raw, headings);
+      return DOMPurify.sanitize(withIds, {
+        ADD_TAGS: ['iframe'],
+        ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling'],
+      });
     } catch (e) {
       console.error('Markdown render error:', e);
       return `<pre class="plaintext-preview">${escapeHtml(displayContent || '')}</pre>`;
@@ -166,123 +170,92 @@ export default function Editor({
       const textarea = e.target;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const newValue = note.content.substring(0, start) + '\t' + note.content.substring(end);
+      const value = textarea.value;
+      const newValue = value.substring(0, start) + '  ' + value.substring(end);
       onContentChange(newValue);
       requestAnimationFrame(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 1;
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
       });
     }
   }
 
   function handleTocClick(slug) {
-    if (!slug || !previewRef.current) return;
-    try {
-      const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(slug) : slug.replace(/[^\w-]/g, '');
-      const el = previewRef.current.querySelector(`#${escaped}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } catch (e) {
-      // ignore TOC navigation errors
+    const el = document.getElementById(slug);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
   async function handleSaveVersion() {
     try {
       await post(`/api/notes/${note.id}/versions`);
-      setShowVersions(true);
-      await loadVersions();
-    } catch (e) {}
-  }
-
-  async function loadVersions() {
-    setVersionsLoading(true);
-    try {
       const data = await get(`/api/notes/${note.id}/versions`);
       setVersions(data.versions);
     } catch (e) {
-      setVersions([]);
-    } finally {
-      setVersionsLoading(false);
+      // 忽略版本保存失败
     }
-  }
-
-  function handleToggleVersions() {
-    if (!showVersions) loadVersions();
-    setShowVersions(!showVersions);
-    setPreviewVersion(null);
   }
 
   async function handleRestoreVersion(version) {
     setRestoring(true);
     try {
-      const data = await post(`/api/notes/${note.id}/versions/${version.id}/restore`);
-      onTitleChange(data.note.title);
-      onContentChange(data.note.content);
-      if (data.note.format !== format) {
-        onFormatChange(data.note.format);
-      }
-      setShowVersions(false);
+      await post(`/api/notes/${note.id}/versions/${version.id}/restore`);
+      const data = await get(`/api/notes/${note.id}`);
       setPreviewVersion(null);
-    } catch (e) {} finally {
+      window.location.reload();
+    } catch (e) {
+      // 忽略恢复失败
+    } finally {
       setRestoring(false);
     }
   }
 
-  const suppressEdit = previewVersion || showVersions;
-
   return (
-    <div className="editor" key={note.id}>
-      <div className="editor-toolbar">
+    <div className="editor">
+      <div className="editor-header">
         <input
           className="editor-title"
-          type="text"
-          value={previewVersion ? previewVersion.title : note.title}
+          value={note.title}
           onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="笔记标题..."
-          readOnly={!!previewVersion || !isEditing}
+          placeholder="笔记标题"
         />
-
-        <select
-          className="format-select"
-          value={format}
-          onChange={(e) => onFormatChange(e.target.value)}
-        >
-          <option value="markdown">Markdown</option>
-          <option value="plaintext">纯文本</option>
-        </select>
-
-        <button
-          className={`btn-edit-mode ${isEditing ? 'active' : ''}`}
-          onClick={() => setIsEditing(!isEditing)}
-          disabled={suppressEdit}
-        >
-          {isEditing ? '退出编辑' : '编辑'}
-        </button>
-
-        <button className="btn-version" onClick={handleSaveVersion} title="保存当前版本">
-          保存版本
-        </button>
-
-        <button
-          className={`btn-version ${showVersions ? 'active' : ''}`}
-          onClick={handleToggleVersions}
-          title="版本历史"
-        >
-          版本历史 ({versions.length})
-        </button>
-
-        {(saving || showSaved) && (
-          <span className={`save-indicator ${showSaved ? 'saved' : ''}`}>
-            {saving ? '保存中...' : '已保存'}
-          </span>
-        )}
+        <div className="editor-actions">
+          <select
+            className="format-select"
+            value={note.format || 'markdown'}
+            onChange={(e) => onFormatChange(e.target.value)}
+          >
+            <option value="markdown">Markdown</option>
+            <option value="plaintext">纯文本</option>
+          </select>
+          <button
+            className="btn-icon"
+            onClick={() => setIsEditing(!isEditing)}
+            title={isEditing ? '阅读模式' : '编辑模式'}
+          >
+            {isEditing ? '📖' : '✏️'}
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => setShowVersions(!showVersions)}
+            title="版本历史"
+          >
+            🕒
+          </button>
+          <button
+            className="btn-icon"
+            onClick={handleSaveVersion}
+            title="保存版本快照"
+          >
+            💾
+          </button>
+        </div>
       </div>
 
-      <div className="editor-main">
-        {/* ── Reading markdown mode ── */}
+      <div className="editor-body">
+        {/* 阅读模式 Markdown */}
         {!isEditing && displayFormat === 'markdown' && (
-          <div key="reading-md" className="editor-split">
+          <div key="reading-md" className="editor-reading">
             {headings.length > 0 && (
               <div className="toc-sidebar">
                 <div className="toc-title">目录</div>
@@ -304,7 +277,7 @@ export default function Editor({
           </div>
         )}
 
-        {/* ── Reading plaintext mode ── */}
+        {/* 阅读模式 纯文本 */}
         {!isEditing && displayFormat === 'plaintext' && (
           <div
             key="reading-txt"
@@ -313,26 +286,42 @@ export default function Editor({
           />
         )}
 
-        {/* ── Editing markdown mode ── */}
+        {/* 编辑模式 Markdown */}
         {isEditing && displayFormat === 'markdown' && (
-          <div key="editing-md" className="editor-split">
-            <textarea
-              ref={textareaRef}
-              className="editor-textarea"
-              value={displayContent}
-              onChange={(e) => onContentChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="在此编写 Markdown..."
-              readOnly={!!previewVersion}
-            />
-            <div
-              className="markdown-preview"
-              ref={setPreviewRef}
-            />
-          </div>
+          <>
+            <div key="editing-md" className="editor-split">
+              <textarea
+                ref={textareaRef}
+                className="editor-textarea"
+                value={displayContent}
+                onChange={(e) => onContentChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="在此编写 Markdown..."
+                readOnly={!!previewVersion}
+              />
+              <div
+                className="markdown-preview"
+                ref={setPreviewRef}
+              />
+            </div>
+            {headings.length > 0 && (
+              <div className="toc-sidebar">
+                <div className="toc-title">目录</div>
+                {headings.map((h, i) => (
+                  <div
+                    key={i}
+                    className={`toc-item toc-level-${h.level}`}
+                    onClick={() => handleTocClick(h.slug)}
+                  >
+                    {h.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Editing plaintext mode ── */}
+        {/* 编辑模式 纯文本 */}
         {isEditing && displayFormat === 'plaintext' && (
           <textarea
             key="editing-txt"
@@ -346,7 +335,7 @@ export default function Editor({
           />
         )}
 
-        {/* ── Version panel ── */}
+        {/* 版本面板 */}
         {showVersions && (
           <div key="versions" className="version-panel">
             <div className="version-panel-header">
@@ -363,7 +352,7 @@ export default function Editor({
                   onClick={() => handleRestoreVersion(previewVersion)}
                   disabled={restoring}
                 >
-                  {restoring ? '恢复中...' : '恢复此版本'}
+                  {restoring ? '恢复中..' : '恢复此版本'}
                 </button>
                 <button className="btn-cancel-preview" onClick={() => setPreviewVersion(null)}>
                   取消预览
@@ -371,7 +360,7 @@ export default function Editor({
               </div>
             )}
             <div className="version-list">
-              {versionsLoading && <div className="version-loading">加载中...</div>}
+              {versionsLoading && <div className="version-loading">加载中..</div>}
               {!versionsLoading && versions.length === 0 && (
                 <div className="version-empty">暂无保存的版本</div>
               )}
@@ -394,11 +383,12 @@ export default function Editor({
           </div>
         )}
       </div>
+
+      {(saving || showSaved) && (
+        <div className={`save-indicator ${showSaved ? 'saved' : ''}`}>
+          {saving ? '保存中..' : '已保存'}
+        </div>
+      )}
     </div>
   );
-}
-
-function escapeHtml(text) {
-  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-  return text.replace(/[&<>"']/g, (c) => map[c]);
 }

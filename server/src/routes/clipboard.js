@@ -1,6 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
+const clipboardy = require('clipboardy');
 const db = require('../db');
 const { auth } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
@@ -9,28 +9,25 @@ const router = express.Router();
 
 router.use(auth);
 
-function readClipboard() {
-  const raw = execSync(
-    'powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard"',
-    { encoding: 'utf-8', timeout: 5000, windowsHide: true }
-  );
-  return raw;
-}
-
-// GET /api/clipboard — list all items (scroll-based, no pagination)
+// GET /api/clipboard - list all items (scroll-based, no pagination)
 router.get('/', (req, res, next) => {
   try {
-    const { search, date, sort = 'created_at', order = 'desc' } = req.query;
+    const { search, date, sort = 'created_at', order = 'desc', page = 1, limit = 50 } = req.query;
 
     const sortColumn = sort === 'char_count' ? 'char_count' : 'created_at';
     const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+    const offset = (pageNum - 1) * limitNum;
 
     let whereClause = 'WHERE user_id = ?';
     const params = [req.user.userId];
 
     if (search && search.trim()) {
-      whereClause += ' AND truncated_preview LIKE ?';
-      params.push(`%${search.trim()}%`);
+      const escapedSearch = search.trim().replace(/[%_]/g, '\\$&');
+      whereClause += ' AND truncated_preview LIKE ? ESCAPE \'\\\'';
+      params.push(`%${escapedSearch}%`);
     }
 
     if (req.query.favorite === '1') {
@@ -42,27 +39,40 @@ router.get('/', (req, res, next) => {
       params.push(date);
     }
 
+    const countRow = db.prepare(
+      `SELECT COUNT(*) as total FROM clipboard_items ${whereClause}`
+    ).get(...params);
+
     const items = db.prepare(
       `SELECT id, truncated_preview, char_count, content, created_at, is_favorite
        FROM clipboard_items ${whereClause}
-       ORDER BY ${sortColumn} ${sortOrder}`
-    ).all(...params);
+       ORDER BY ${sortColumn} ${sortOrder}
+       LIMIT ? OFFSET ?`
+    ).all(...params, limitNum, offset);
 
     res.json({
       success: true,
-      data: { items },
+      data: {
+        items,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: countRow.total,
+          totalPages: Math.ceil(countRow.total / limitNum),
+        },
+      },
     });
   } catch (err) {
     next(err);
   }
 });
 
-// POST /api/clipboard/capture — read system clipboard, deduplicate, store
+// POST /api/clipboard/capture - read system clipboard, deduplicate, store
 router.post('/capture', (req, res, next) => {
   try {
     let content;
     try {
-      content = readClipboard();
+      content = clipboardy.readSync();
     } catch {
       return res.json({
         success: true,
@@ -94,12 +104,14 @@ router.post('/capture', (req, res, next) => {
       });
     }
 
+    const MAX_CONTENT_LENGTH = 100000; // 100KB
     const truncated_preview = trimmed.slice(0, 100);
     const char_count = trimmed.length;
+    const contentToStore = trimmed.length > MAX_CONTENT_LENGTH ? trimmed.slice(0, MAX_CONTENT_LENGTH) : trimmed;
 
     const result = db.prepare(
       'INSERT INTO clipboard_items (user_id, content, content_hash, truncated_preview, char_count) VALUES (?, ?, ?, ?, ?)'
-    ).run(req.user.userId, trimmed, hash, truncated_preview, char_count);
+    ).run(req.user.userId, contentToStore, hash, truncated_preview, char_count);
 
     const item = db.prepare(
       'SELECT id, content, truncated_preview, char_count, created_at, is_favorite FROM clipboard_items WHERE id = ?'
@@ -114,7 +126,7 @@ router.post('/capture', (req, res, next) => {
   }
 });
 
-// GET /api/clipboard/:id — get single item with full content
+// GET /api/clipboard/:id - get single item with full content
 router.get('/:id', (req, res, next) => {
   try {
     const item = db.prepare(
@@ -131,7 +143,7 @@ router.get('/:id', (req, res, next) => {
   }
 });
 
-// POST /api/clipboard/:id/copy — return content for client-side clipboard write
+// POST /api/clipboard/:id/copy - return content for client-side clipboard write
 router.post('/:id/copy', (req, res, next) => {
   try {
     const item = db.prepare(
@@ -150,7 +162,7 @@ router.post('/:id/copy', (req, res, next) => {
   }
 });
 
-// PATCH /api/clipboard/:id — toggle favorite
+// PATCH /api/clipboard/:id - toggle favorite
 router.patch('/:id', (req, res, next) => {
   try {
     const item = db.prepare(
@@ -175,7 +187,7 @@ router.patch('/:id', (req, res, next) => {
   }
 });
 
-// DELETE /api/clipboard/:id — delete single item
+// DELETE /api/clipboard/:id - delete single item
 router.delete('/:id', (req, res, next) => {
   try {
     const existing = db.prepare(
@@ -194,7 +206,7 @@ router.delete('/:id', (req, res, next) => {
   }
 });
 
-// DELETE /api/clipboard — clear all items for current user
+// DELETE /api/clipboard - clear all items for current user
 router.delete('/', (req, res, next) => {
   try {
     db.prepare('DELETE FROM clipboard_items WHERE user_id = ?').run(req.user.userId);

@@ -45,6 +45,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 
 // Try HTTPS with self-signed cert, fallback to HTTP
 const certPath = path.join(__dirname, '../certs');
@@ -53,11 +54,11 @@ if (fs.existsSync(path.join(certPath, 'key.pem')) && fs.existsSync(path.join(cer
     key: fs.readFileSync(path.join(certPath, 'key.pem')),
     cert: fs.readFileSync(path.join(certPath, 'cert.pem')),
   };
-  https.createServer(httpsOptions, app).listen(PORT, () => {
-    console.log(`HTTPS server running on port ${PORT}`);
-  });
-} else {
-  http.createServer(app).listen(PORT, () => {
-    console.log(`HTTP server running on port ${PORT}`);
+  https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+    console.log(`HTTPS server running on port ${HTTPS_PORT}`);
   });
 }
+
+http.createServer(app).listen(PORT, () => {
+  console.log(`HTTP server running on port ${PORT}`);
+});

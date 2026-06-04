@@ -4,3 +4,4 @@ server/data/
 .env
 server/.env
 .claude/
+server/certs/

@@ -1,5 +1,8 @@
 ﻿require('dotenv').config();
 const express = require('express');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/auth');
@@ -12,7 +15,9 @@ const { authLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
 if (process.env.NODE_ENV !== 'production') {
-  app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+  app.use(cors({ origin: ['http://localhost:5173', 'https://localhost:5173'], credentials: true }));
+} else {
+  app.use(cors({ origin: true, credentials: true }));
 }
 app.use(express.json());
 
@@ -40,6 +45,20 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
+
+// HTTPS with self-signed cert (for clipboard API)
+const certPath = path.join(__dirname, '../certs');
+if (fs.existsSync(path.join(certPath, 'key.pem')) && fs.existsSync(path.join(certPath, 'cert.pem'))) {
+  const httpsOptions = {
+    key: fs.readFileSync(path.join(certPath, 'key.pem')),
+    cert: fs.readFileSync(path.join(certPath, 'cert.pem')),
+  };
+  https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
+    console.log(`HTTPS server running on port ${HTTPS_PORT}`);
+  });
+}
+
+http.createServer(app).listen(PORT, () => {
+  console.log(`HTTP server running on port ${PORT}`);
 });

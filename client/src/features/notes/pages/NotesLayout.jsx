@@ -316,6 +316,7 @@ export default function NotesLayout() {
         onSelectFolder={handleSelectFolder}
         onFolderChange={fetchFolders}
         onDropNote={handleDropNote}
+        onSearch={handleSearch}
         collapsed={folderPanelCollapsed}
         onToggleCollapse={() => setFolderPanelCollapsed(true)}
       />
@@ -332,10 +333,10 @@ export default function NotesLayout() {
         pagination={pagination}
         sort={sort}
         order={order}
+        searchTerm={searchTerm}
         onSelectNote={handleSelectNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
-        onSearch={handleSearch}
         onSortChange={handleSortChange}
         onPageChange={setPage}
       />

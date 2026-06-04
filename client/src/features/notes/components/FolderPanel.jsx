@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { post, put, del } from '../../../shared/api/client';
+import SearchBar from './SearchBar';
 
 const ALL_NOTES_HOVER_ID = 'all';
 
@@ -9,6 +10,7 @@ export default function FolderPanel({
   onSelectFolder,
   onFolderChange,
   onDropNote,
+  onSearch,
   collapsed,
   onToggleCollapse,
 }) {
@@ -109,6 +111,10 @@ export default function FolderPanel({
             ‹
           </button>
         </div>
+      </div>
+
+      <div className="folder-panel-search">
+        <SearchBar onSearch={onSearch} />
       </div>
 
       <div className="folder-panel-list">

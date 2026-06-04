@@ -360,6 +360,10 @@
   padding: 0.75rem 0.75rem 0.375rem;
 }
 
+.folder-panel-search {
+  padding: 0 0.75rem 0.375rem;
+}
+
 .folder-panel-title {
   font-size: 0.75rem;
   font-weight: 600;
@@ -644,6 +648,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.005em;
+}
+
+.note-item-title .search-highlight {
+  background: var(--color-search-highlight);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
 }
 
 .note-item-date {

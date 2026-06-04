@@ -33,6 +33,9 @@
   --color-warning: #ff9500;
   --color-warning-bg: rgba(255, 149, 0, 0.08);
 
+  /* ── Search ── */
+  --color-search-highlight: #fde68a;
+
   /* ── Typography ── */
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;

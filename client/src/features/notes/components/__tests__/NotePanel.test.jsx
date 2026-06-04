@@ -151,6 +151,24 @@ describe('NotePanel', () => {
       expect(props.onSearch).toHaveBeenCalledWith('test');
       vi.useRealTimers();
     });
+
+    it('搜索结果高亮标题中的关键词', () => {
+      renderNotePanel({ searchTerm: 'First' });
+      const highlights = screen.getAllByText('First');
+      const highlight = highlights.find((el) => el.classList.contains('search-highlight'));
+      expect(highlight).toBeInTheDocument();
+      expect(highlight.tagName).toBe('MARK');
+    });
+
+    it('搜索无结果时显示搜索提示', () => {
+      renderNotePanel({ notes: [], searchTerm: '不存在的关键词' });
+      expect(screen.getByText(/没有找到包含「不存在的关键词」的笔记/)).toBeInTheDocument();
+    });
+
+    it('不搜索时不显示高亮', () => {
+      const { container } = renderNotePanel({ searchTerm: '' });
+      expect(container.querySelector('.search-highlight')).toBeNull();
+    });
   });
 
   describe('删除笔记', () => {

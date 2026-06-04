@@ -1,10 +1,10 @@
 import NoteItem from './NoteItem';
 
-export default function NoteList({ notes, selectedNoteId, onSelectNote, onDeleteNote }) {
+export default function NoteList({ notes, selectedNoteId, onSelectNote, onDeleteNote, searchTerm }) {
   if (notes.length === 0) {
     return (
       <div className="note-list-empty">
-        暂无笔记，创建你的第一篇笔记吧！
+        {searchTerm ? `没有找到包含「${searchTerm}」的笔记` : '暂无笔记，创建你的第一篇笔记吧！'}
       </div>
     );
   }
@@ -18,6 +18,7 @@ export default function NoteList({ notes, selectedNoteId, onSelectNote, onDelete
           isSelected={note.id === selectedNoteId}
           onSelect={onSelectNote}
           onDelete={onDeleteNote}
+          searchTerm={searchTerm}
         />
       ))}
     </div>

@@ -1,4 +1,3 @@
-import SearchBar from './SearchBar';
 import NoteList from './NoteList';
 
 export default function NotePanel({
@@ -7,10 +6,10 @@ export default function NotePanel({
   pagination,
   sort,
   order,
+  searchTerm,
   onSelectNote,
   onCreateNote,
   onDeleteNote,
-  onSearch,
   onSortChange,
   onPageChange,
 }) {
@@ -20,7 +19,6 @@ export default function NotePanel({
     <div className="note-panel">
       <div className="note-panel-header">
         <h2>笔记</h2>
-        <SearchBar onSearch={onSearch} />
         <div className="sort-row">
           <select
             className="sort-select"
@@ -46,6 +44,7 @@ export default function NotePanel({
         selectedNoteId={selectedNoteId}
         onSelectNote={onSelectNote}
         onDeleteNote={onDeleteNote}
+        searchTerm={searchTerm}
       />
 
       {totalPages > 1 && (

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
+export default function NoteItem({ note, isSelected, onSelect, onDelete, searchTerm }) {
   const dragRef = useRef(null);
 
   const date = new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
@@ -8,6 +8,17 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
     day: 'numeric',
     year: 'numeric',
   });
+
+  function renderHighlightedTitle(title) {
+    if (!searchTerm || !title) return title || '未命名';
+    const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    const parts = title.split(regex);
+    const testRegex = new RegExp(`^${escaped}$`, 'i');
+    return parts.map((part, i) =>
+      testRegex.test(part) ? <mark key={i} className="search-highlight">{part}</mark> : part
+    );
+  }
 
   function handleDelete(e) {
     e.stopPropagation();
@@ -41,7 +52,7 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
       onDragEnd={handleDragEnd}
     >
       <div className="note-item-content">
-        <div className="note-item-title">{note.title || '未命名'}</div>
+        <div className="note-item-title">{renderHighlightedTitle(note.title)}</div>
         <div className="note-item-date">{date}</div>
       </div>
       <button

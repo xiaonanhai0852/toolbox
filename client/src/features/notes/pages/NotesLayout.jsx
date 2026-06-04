@@ -24,6 +24,7 @@ export default function NotesLayout() {
   const [order, setOrder] = useState('desc');
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
+  const [mobileView, setMobileView] = useState('notes');
 
   const noteRef = useRef(null);
   const saveTimerRef = useRef(null);
@@ -176,6 +177,9 @@ export default function NotesLayout() {
       }
     }
     navigate(`/tools/notes/${noteId}`);
+    if (window.innerWidth < 768) {
+      setMobileView('editor');
+    }
   }
 
   async function handleCreateNote() {
@@ -186,6 +190,9 @@ export default function NotesLayout() {
       skipEffectRef.current = true;
       fetchNotes({ page: 1 });
       navigate(`/tools/notes/${data.note.id}`);
+      if (window.innerWidth < 768) {
+        setMobileView('editor');
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -273,6 +280,9 @@ export default function NotesLayout() {
     setPage(1);
     skipEffectRef.current = true;
     fetchNotes({ page: 1, folder_id: folderId });
+    if (window.innerWidth < 768) {
+      setMobileView('notes');
+    }
   }
 
   async function handleDropNote(noteId, folderId) {
@@ -288,7 +298,7 @@ export default function NotesLayout() {
   }
 
   return (
-    <div className={`app-layout${folderPanelCollapsed ? ' folder-panel-collapsed' : ''}`}>
+    <div className={`app-layout${folderPanelCollapsed ? ' folder-panel-collapsed' : ''} mobile-view-${mobileView}`}>
       {error && (
         <div className="error-banner" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
           {error}
@@ -337,6 +347,30 @@ export default function NotesLayout() {
         onFormatChange={handleFormatChange}
         onExitEdit={handleExitEdit}
       />
+
+      <nav className="mobile-bottom-nav">
+        <button
+          className={mobileView === 'folders' ? 'active' : ''}
+          onClick={() => setMobileView('folders')}
+        >
+          <span className="mobile-bottom-nav-icon">📁</span>
+          <span className="mobile-bottom-nav-label">文件夹</span>
+        </button>
+        <button
+          className={mobileView === 'notes' ? 'active' : ''}
+          onClick={() => setMobileView('notes')}
+        >
+          <span className="mobile-bottom-nav-icon">📝</span>
+          <span className="mobile-bottom-nav-label">笔记</span>
+        </button>
+        <button
+          className={mobileView === 'editor' ? 'active' : ''}
+          onClick={() => setMobileView('editor')}
+        >
+          <span className="mobile-bottom-nav-icon">✏️</span>
+          <span className="mobile-bottom-nav-label">编辑</span>
+        </button>
+      </nav>
 
       {deleteTargetId && (
         <ConfirmDialog

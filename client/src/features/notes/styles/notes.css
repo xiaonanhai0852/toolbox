@@ -42,19 +42,23 @@
 .search-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: none;
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius);
   font-size: 0.875rem;
   font-family: var(--font-sans);
-  background: var(--bg-subtle);
+  background: var(--surface);
   color: var(--color-text);
   transition: all 0.15s var(--ease-out);
 }
 
+.search-input:hover {
+  border-color: var(--color-primary);
+}
+
 .search-input:focus {
   outline: none;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-ring);
-  background: var(--surface-solid);
 }
 
 .search-input::placeholder {
@@ -63,40 +67,116 @@
 
 .sort-row {
   margin-bottom: 0;
+  position: relative;
 }
 
 .sort-select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: none;
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius);
-  background: var(--bg-subtle);
+  background: var(--surface);
   color: var(--color-text);
   font-size: 0.875rem;
   font-family: var(--font-sans);
   cursor: pointer;
   transition: all 0.15s var(--ease-out);
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  padding-right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: left;
+}
+
+.sort-select:hover {
+  border-color: var(--color-primary);
 }
 
 .sort-select:focus {
   outline: none;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-ring);
+}
+
+.sort-select-text {
+  flex: 1;
+}
+
+.sort-select-arrow {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  animation: dropdown-in 0.15s var(--ease-out);
+  overflow: hidden;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sort-dropdown-item {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.1s var(--ease-out);
+}
+
+.sort-dropdown-item:hover {
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+}
+
+.sort-dropdown-item.active {
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.sort-dropdown-icon {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.sort-dropdown-item:hover .sort-dropdown-icon,
+.sort-dropdown-item.active .sort-dropdown-icon {
+  color: var(--color-primary);
 }
 
 .btn-new-note {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 0.9375rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: var(--font-sans);
   cursor: pointer;
@@ -217,21 +297,22 @@
 
 .folder-name-input {
   flex: 1;
-  padding: 0.3rem 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: none;
   border-radius: var(--radius);
   font-size: 0.875rem;
   font-family: var(--font-sans);
-  background: var(--bg-subtle);
+  background: var(--color-primary-faint);
   color: var(--color-text);
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-primary-ring);
   transition: all 0.15s var(--ease-out);
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .folder-name-input:focus {
-  background: var(--surface-solid);
-  box-shadow: 0 0 0 3px var(--color-primary-ring);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--color-primary);
 }
 
 .folder-actions {
@@ -262,7 +343,7 @@
   cursor: pointer;
   font-size: 0.8125rem;
   padding: 0.125rem 0.25rem;
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--color-text-tertiary);
   line-height: 1;
   transition: all 0.15s var(--ease-out);
@@ -316,7 +397,10 @@
 }
 
 .folder-create-form {
-  padding: 0.25rem 0.75rem;
+  margin: 0 0.375rem;
+  height: 38px;
+  display: flex;
+  align-items: center;
   animation: form-slide-in 0.2s var(--ease-out);
 }
 
@@ -383,22 +467,21 @@
   flex: 1;
   overflow-y: auto;
   padding: 0.25rem 0;
-  scrollbar-gutter: stable;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin: 0 2px;
 }
 
 .folder-panel-item {
   display: flex;
   align-items: center;
   margin: 0 0.375rem;
-  padding: 0.4rem 0.5rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s var(--ease-out);
   gap: 0.375rem;
   border-radius: var(--radius);
   color: var(--color-text);
-  height: 36px;
+  height: 38px;
   box-sizing: border-box;
 }
 
@@ -488,7 +571,7 @@
   cursor: pointer;
   font-size: 1rem;
   padding: 0.125rem 0.375rem;
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--color-text-tertiary);
   line-height: 1;
   transition: all 0.15s var(--ease-out);
@@ -592,7 +675,7 @@
   background: var(--bg-subtle);
   border: none;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 0.75rem;
   font-family: var(--font-sans);
@@ -689,7 +772,7 @@
   transition: all 0.12s var(--ease-out);
   flex-shrink: 0;
   line-height: 1;
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 
 .note-item:hover .note-item-delete {
@@ -712,6 +795,7 @@
 .note-panel-header-actions {
   display: flex;
   gap: 0.375rem;
+  width: 100%;
 }
 
 .btn-batch-mode {
@@ -720,7 +804,7 @@
   background: var(--bg-subtle);
   color: var(--color-text-secondary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-size: 0.875rem;
   font-weight: 500;
   font-family: var(--font-sans);
@@ -970,7 +1054,7 @@
   background: var(--bg-subtle);
   border: none;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 0.75rem;
   font-family: var(--font-sans);
@@ -1291,7 +1375,7 @@
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1372,7 +1456,7 @@
   color: var(--color-text-tertiary);
   padding: 0.125rem 0.25rem;
   line-height: 1;
-  border-radius: 6px;
+  border-radius: var(--radius);
   transition: all 0.15s var(--ease-out);
 }
 

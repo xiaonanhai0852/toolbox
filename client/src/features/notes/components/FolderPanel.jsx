@@ -42,7 +42,11 @@ const FolderPanel = memo(function FolderPanel({
   }, [newFolderName, onFolderChange]);
 
   const handleUpdateFolder = useCallback(async (folderId) => {
-    if (!editingName.trim()) return;
+    if (!editingName.trim()) {
+      setEditingFolderId(null);
+      setEditingName('');
+      return;
+    }
     try {
       await put(`/api/folders/${folderId}`, { name: editingName.trim() });
       setEditingFolderId(null);
@@ -101,6 +105,8 @@ const FolderPanel = memo(function FolderPanel({
   }, []);
 
   const handleToggleFolder = useCallback((folderId) => {
+    setEditingFolderId(null);
+    setEditingName('');
     onSelectFolder(selectedFolderId === folderId ? null : folderId);
   }, [selectedFolderId, onSelectFolder]);
 
@@ -113,7 +119,7 @@ const FolderPanel = memo(function FolderPanel({
           title="折叠文件夹面板"
           onClick={onToggleCollapse}
         >
-          📁
+          ‹
         </button>
       </div>
 
@@ -141,6 +147,10 @@ const FolderPanel = memo(function FolderPanel({
               className="folder-name-input"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
+              onBlur={() => {
+                setCreatingFolder(false);
+                setNewFolderName('');
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreateFolder();
                 if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName(''); }

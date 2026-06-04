@@ -1,12 +1,18 @@
 import { useState } from 'react';
 
-export default function ClipboardCard({ item, onToggleFavorite, onCopy, onDelete }) {
-  const [copied, setCopied] = useState(false);
-
-  const time = new Date(item.created_at + 'Z').toLocaleString('zh-CN', {
+function getBeijingTime(dateStr) {
+  const utcDate = new Date(dateStr + 'Z');
+  return utcDate.toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+export default function ClipboardCard({ item, onToggleFavorite, onCopy, onDelete }) {
+  const [copied, setCopied] = useState(false);
+
+  const time = getBeijingTime(item.created_at);
 
   const handleCopy = (e) => {
     e.stopPropagation();

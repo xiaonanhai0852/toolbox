@@ -1,6 +1,13 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import NoteList from './NoteList';
 import BatchToolbar from './BatchToolbar';
+
+const SORT_OPTIONS = [
+  { value: 'updated_at::desc', label: '最后修改', icon: '↓' },
+  { value: 'updated_at::asc', label: '最后修改', icon: '↑' },
+  { value: 'created_at::desc', label: '创建时间', icon: '↓' },
+  { value: 'created_at::asc', label: '创建时间', icon: '↑' },
+];
 
 const NotePanel = memo(function NotePanel({
   notes,
@@ -28,6 +35,26 @@ const NotePanel = memo(function NotePanel({
   onToggleFolderPanel,
 }) {
   const { page, totalPages } = pagination;
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const currentSort = SORT_OPTIONS.find(o => o.value === `${sort}::${order}`);
+
+  const handleSortSelect = useCallback((value) => {
+    const [s, o] = value.split('::');
+    onSortChange(s, o);
+    setSortDropdownOpen(false);
+  }, [onSortChange]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const allSelected = useMemo(
     () => notes.length > 0 && notes.every((n) => selectedNoteIds.has(n.id)),
@@ -53,25 +80,33 @@ const NotePanel = memo(function NotePanel({
           <div className="note-panel-header-top">
             {folderPanelCollapsed && (
               <button className="btn-toggle-folder" onClick={onToggleFolderPanel} title="展开文件夹">
-                📁
+                ›
               </button>
             )}
             <h2>笔记</h2>
           </div>
-          <div className="sort-row">
-            <select
+          <div className="sort-row" ref={dropdownRef}>
+            <button
               className="sort-select"
-              value={`${sort}::${order}`}
-              onChange={(e) => {
-                const [s, o] = e.target.value.split('::');
-                onSortChange(s, o);
-              }}
+              onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
             >
-              <option value="updated_at::desc">最后修改 ↓</option>
-              <option value="updated_at::asc">最后修改 ↑</option>
-              <option value="created_at::desc">创建时间 ↓</option>
-              <option value="created_at::asc">创建时间 ↑</option>
-            </select>
+              <span className="sort-select-text">{currentSort?.label}</span>
+              <span className="sort-select-arrow">▾</span>
+            </button>
+            {sortDropdownOpen && (
+              <div className="sort-dropdown">
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    className={`sort-dropdown-item ${option.value === `${sort}::${order}` ? 'active' : ''}`}
+                    onClick={() => handleSortSelect(option.value)}
+                  >
+                    <span>{option.label}</span>
+                    <span className="sort-dropdown-icon">{option.icon}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="note-panel-header-actions">
             <button className="btn-new-note" onClick={onCreateNote}>

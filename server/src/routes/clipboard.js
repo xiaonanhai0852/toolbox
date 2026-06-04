@@ -1,6 +1,6 @@
 ﻿const express = require('express');
 const crypto = require('crypto');
-const clipboardy = require('clipboardy');
+const clipboardy = require('clipboardy').default;
 const db = require('../db');
 const { auth } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
@@ -8,6 +8,22 @@ const { AppError } = require('../middleware/errorHandler');
 const router = express.Router();
 
 router.use(auth);
+
+// GET /api/clipboard/dates - list dates that have records
+router.get('/dates', (req, res, next) => {
+  try {
+    const rows = db.prepare(
+      "SELECT DISTINCT DATE(created_at, '+8 hours') as date FROM clipboard_items WHERE user_id = ? ORDER BY date DESC"
+    ).all(req.user.userId);
+
+    res.json({
+      success: true,
+      data: { dates: rows.map((r) => r.date) },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/clipboard - list all items (scroll-based, no pagination)
 router.get('/', (req, res, next) => {
@@ -35,8 +51,15 @@ router.get('/', (req, res, next) => {
     }
 
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      whereClause += ' AND DATE(created_at) = ?';
+      whereClause += " AND DATE(created_at, '+8 hours') = ?";
       params.push(date);
+    } else if (req.query.date_from && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date_from)) {
+      whereClause += " AND DATE(created_at, '+8 hours') >= ?";
+      params.push(req.query.date_from);
+      if (req.query.date_to && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date_to)) {
+        whereClause += " AND DATE(created_at, '+8 hours') <= ?";
+        params.push(req.query.date_to);
+      }
     }
 
     const countRow = db.prepare(

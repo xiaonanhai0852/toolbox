@@ -26,7 +26,7 @@ export default function NotesLayout() {
   const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedNoteIds, setSelectedNoteIds] = useState(new Set());
-  const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
+  const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(true);
   const [mobileView, setMobileView] = useState('notes');
   const [allNotesCount, setAllNotesCount] = useState(0);
 

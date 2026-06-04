@@ -9,6 +9,8 @@ export default function FolderPanel({
   onSelectFolder,
   onFolderChange,
   onDropNote,
+  collapsed,
+  onToggleCollapse,
 }) {
   const [editingFolderId, setEditingFolderId] = useState(null);
   const [editingName, setEditingName] = useState('');
@@ -79,13 +81,22 @@ export default function FolderPanel({
     <div className="folder-panel">
       <div className="folder-panel-header">
         <span className="folder-panel-title">文件夹</span>
-        <button
-          className="folder-add-btn"
-          title="新建文件夹"
-          onClick={() => { setCreatingFolder(true); setNewFolderName(''); }}
-        >
-          +
-        </button>
+        <div style={{ display: 'flex', gap: '0.125rem' }}>
+          <button
+            className="folder-add-btn"
+            title="新建文件夹"
+            onClick={() => { setCreatingFolder(true); setNewFolderName(''); }}
+          >
+            +
+          </button>
+          <button
+            className="folder-collapse-btn"
+            title="折叠文件夹面板"
+            onClick={onToggleCollapse}
+          >
+            ‹
+          </button>
+        </div>
       </div>
 
       <div className="folder-panel-list">

@@ -23,6 +23,7 @@ export default function NotesLayout() {
   const [sort, setSort] = useState('updated_at');
   const [order, setOrder] = useState('desc');
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
 
   const noteRef = useRef(null);
   const saveTimerRef = useRef(null);
@@ -287,7 +288,7 @@ export default function NotesLayout() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout${folderPanelCollapsed ? ' folder-panel-collapsed' : ''}`}>
       {error && (
         <div className="error-banner" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
           {error}
@@ -305,7 +306,16 @@ export default function NotesLayout() {
         onSelectFolder={handleSelectFolder}
         onFolderChange={fetchFolders}
         onDropNote={handleDropNote}
+        collapsed={folderPanelCollapsed}
+        onToggleCollapse={() => setFolderPanelCollapsed(true)}
       />
+      <div
+        className="folder-panel-collapse-toggle"
+        title="展开文件夹面板"
+        onClick={() => setFolderPanelCollapsed(false)}
+      >
+        ›
+      </div>
       <NotePanel
         notes={notes}
         selectedNoteId={selectedNote?.id}

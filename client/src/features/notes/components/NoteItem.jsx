@@ -8,6 +8,7 @@ export default function NoteItem({
   onSelect,
   onDelete,
   onBatchToggle,
+  onEnterBatchMode,
   searchTerm,
 }) {
   const dragRef = useRef(null);
@@ -68,6 +69,7 @@ export default function NoteItem({
   function handlePointerDown() {
     longPressTimer.current = setTimeout(() => {
       if (!isBatchMode) {
+        if (onEnterBatchMode) onEnterBatchMode();
         onBatchToggle(note.id);
       }
     }, 600);

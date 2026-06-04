@@ -8,6 +8,7 @@ export default function NoteList({
   onSelectNote,
   onDeleteNote,
   onBatchToggle,
+  onEnterBatchMode,
   searchTerm,
 }) {
   if (notes.length === 0) {
@@ -30,6 +31,7 @@ export default function NoteList({
           onSelect={onSelectNote}
           onDelete={onDeleteNote}
           onBatchToggle={onBatchToggle}
+          onEnterBatchMode={onEnterBatchMode}
           searchTerm={searchTerm}
         />
       ))}

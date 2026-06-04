@@ -26,9 +26,11 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     name TEXT NOT NULL,
+    parent_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS notes (
@@ -89,6 +91,13 @@ try {
 // Add folder_id column to existing notes table if missing
 try {
   db.exec(`ALTER TABLE notes ADD COLUMN folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL`);
+} catch (e) {
+  // column already exists
+}
+
+// Add parent_id column to existing folders table if missing
+try {
+  db.exec(`ALTER TABLE folders ADD COLUMN parent_id INTEGER REFERENCES folders(id) ON DELETE SET NULL`);
 } catch (e) {
   // column already exists
 }

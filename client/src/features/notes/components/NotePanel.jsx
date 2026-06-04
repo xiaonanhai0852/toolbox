@@ -77,6 +77,7 @@ export default function NotePanel({
         onSelectNote={onSelectNote}
         onDeleteNote={onDeleteNote}
         onBatchToggle={onBatchToggle}
+        onEnterBatchMode={onEnterBatchMode}
         searchTerm={searchTerm}
       />
 

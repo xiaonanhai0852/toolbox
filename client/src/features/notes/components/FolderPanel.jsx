@@ -54,7 +54,7 @@ export default function FolderPanel({
   }, [editingName, onFolderChange]);
 
   const handleDeleteFolder = useCallback(async (folderId) => {
-    if (!confirm('确定删除此文件夹？文件夹内的笔记将移出到根目录。')) return;
+    if (!confirm('确定删除此文件夹？文件夹内的笔记将不再属于任何文件夹。')) return;
     try {
       await del(`/api/folders/${folderId}`);
       if (selectedFolderId === folderId) {

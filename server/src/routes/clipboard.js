@@ -90,20 +90,26 @@ router.get('/', (req, res, next) => {
   }
 });
 
-// POST /api/clipboard/capture - read system clipboard, deduplicate, store
+// POST /api/clipboard/capture - receive content from client, deduplicate, store
 router.post('/capture', (req, res, next) => {
   try {
-    let content;
-    try {
-      content = clipboardy.readSync();
-    } catch {
-      return res.json({
-        success: true,
-        data: { duplicate: false, message: '剪贴板内容不是文本格式。' },
-      });
+    const { content: clientContent } = req.body;
+
+    let trimmed;
+    if (clientContent) {
+      trimmed = clientContent.trim();
+    } else {
+      // Fallback: try reading server clipboard (local dev only)
+      try {
+        trimmed = clipboardy.readSync().trim();
+      } catch {
+        return res.json({
+          success: true,
+          data: { duplicate: false, message: '剪贴板内容不是文本格式。' },
+        });
+      }
     }
 
-    const trimmed = content.trim();
     if (!trimmed) {
       return res.json({
         success: true,

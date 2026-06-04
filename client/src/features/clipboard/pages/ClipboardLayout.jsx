@@ -97,7 +97,16 @@ export default function ClipboardLayout() {
 
   const captureOnce = useCallback(async () => {
     try {
-      const data = await post('/api/clipboard/capture');
+      let content;
+      try {
+        content = await navigator.clipboard.readText();
+      } catch {
+        // 权限被拒绝或浏览器不支持
+        return;
+      }
+      if (!content || !content.trim()) return;
+
+      const data = await post('/api/clipboard/capture', { content });
       if (!data.duplicate && data.item) {
         setItems((prev) => [data.item, ...prev]);
         fetchDates();
@@ -105,6 +114,30 @@ export default function ClipboardLayout() {
     } catch (err) {
       if (err.message) setError(err.message);
     }
+  }, [fetchDates]);
+
+  // 首次需要用户点击授权剪贴板权限
+  const handleCapture = useCallback(async () => {
+    setCapturing(true);
+    try {
+      const content = await navigator.clipboard.readText();
+      if (!content || !content.trim()) {
+        setCapturing(false);
+        return;
+      }
+      const data = await post('/api/clipboard/capture', { content });
+      if (!data.duplicate && data.item) {
+        setItems((prev) => [data.item, ...prev]);
+        fetchDates();
+      }
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        setError('请允许剪贴板访问权限后重试');
+      } else if (err.message) {
+        setError(err.message);
+      }
+    }
+    setCapturing(false);
   }, [fetchDates]);
 
   useEffect(() => {
@@ -120,11 +153,6 @@ export default function ClipboardLayout() {
       }
     };
   }, [autoMonitoring, captureOnce]);
-
-  function handleCapture() {
-    setCapturing(true);
-    captureOnce().finally(() => setCapturing(false));
-  }
 
   async function handleCopy(id) {
     try {

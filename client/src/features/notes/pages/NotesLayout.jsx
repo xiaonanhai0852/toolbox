@@ -3,6 +3,7 @@ import '../styles/notes.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { get, post, put, del } from '../../../shared/api/client';
 import Sidebar from '../components/Sidebar';
+import FolderPanel from '../components/FolderPanel';
 import Editor from '../components/Editor';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -31,9 +32,12 @@ export default function NotesLayout() {
 
   useEffect(() => {
     noteRef.current = selectedNote;
+  }, [selectedNote]);
+
+  useEffect(() => {
     selectedIdRef.current = selectedNote?.id;
     hasChangesRef.current = false;
-  }, [selectedNote]);
+  }, [selectedNote?.id]);
 
   const skipEffectRef = useRef(false);
   const folderIdRef = useRef(null);
@@ -237,6 +241,18 @@ export default function NotesLayout() {
     });
   }
 
+  async function handleExitEdit() {
+    if (selectedNote && hasChangesRef.current) {
+      await flushSave();
+      try {
+        await post(`/api/notes/${selectedNote.id}/versions`);
+      } catch (err) {
+        // 忽略版本保存失败
+      }
+      hasChangesRef.current = false;
+    }
+  }
+
   function handleSearch(term) {
     setSearchTerm(term);
     setPage(1);
@@ -283,11 +299,16 @@ export default function NotesLayout() {
           </button>
         </div>
       )}
+      <FolderPanel
+        folders={folders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={handleSelectFolder}
+        onFolderChange={fetchFolders}
+        onDropNote={handleDropNote}
+      />
       <Sidebar
         notes={notes}
         selectedNoteId={selectedNote?.id}
-        folders={folders}
-        selectedFolderId={selectedFolderId}
         pagination={pagination}
         sort={sort}
         order={order}
@@ -297,9 +318,6 @@ export default function NotesLayout() {
         onSearch={handleSearch}
         onSortChange={handleSortChange}
         onPageChange={setPage}
-        onSelectFolder={handleSelectFolder}
-        onFolderChange={fetchFolders}
-        onDropNote={handleDropNote}
       />
       <Editor
         note={selectedNote}
@@ -307,6 +325,7 @@ export default function NotesLayout() {
         onTitleChange={handleTitleChange}
         onContentChange={handleContentChange}
         onFormatChange={handleFormatChange}
+        onExitEdit={handleExitEdit}
       />
 
       {deleteTargetId && (

@@ -54,6 +54,7 @@ export default function RegisterPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              placeholder="请输入用户名"
               required
               autoFocus
             />
@@ -65,6 +66,7 @@ export default function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="请输入邮箱地址"
               required
             />
           </div>
@@ -75,6 +77,7 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少6个字符"
               required
             />
           </div>
@@ -85,6 +88,7 @@ export default function RegisterPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="请再次输入密码"
               required
             />
           </div>

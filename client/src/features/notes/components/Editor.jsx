@@ -3,7 +3,7 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
-import { get, post } from '../../../shared/api/client';
+import { get, post, del } from '../../../shared/api/client';
 import { escapeHtml } from '../../../shared/utils/html';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -63,6 +63,7 @@ export default function Editor({
   onTitleChange,
   onContentChange,
   onFormatChange,
+  onExitEdit,
 }) {
   const textareaRef = useRef(null);
   const previewRef = useRef(null);
@@ -210,6 +211,18 @@ export default function Editor({
     }
   }
 
+  async function handleDeleteVersion(versionId) {
+    try {
+      await del(`/api/notes/${note.id}/versions/${versionId}`);
+      setVersions((prev) => prev.filter((v) => v.id !== versionId));
+      if (previewVersion?.id === versionId) setPreviewVersion(null);
+    } catch (e) {
+      // 忽略删除失败
+    }
+  }
+
+  const showToc = headings.length > 0 && displayFormat === 'markdown';
+
   return (
     <div className="editor">
       <div className="editor-header">
@@ -230,7 +243,10 @@ export default function Editor({
           </select>
           <button
             className="btn-icon"
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (isEditing && onExitEdit) onExitEdit();
+              setIsEditing(!isEditing);
+            }}
             title={isEditing ? '阅读模式' : '编辑模式'}
           >
             {isEditing ? '📖' : '✏️'}
@@ -252,29 +268,30 @@ export default function Editor({
         </div>
       </div>
 
-      <div className="editor-body">
+      {/* TOC — floating island on the right */}
+      {showToc && (
+        <div className="toc-sidebar">
+          <div className="toc-title">目录</div>
+          {headings.map((h, i) => (
+            <div
+              key={i}
+              className={`toc-item toc-level-${h.level}`}
+              onClick={() => handleTocClick(h.slug)}
+            >
+              {h.text}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={`editor-body${showToc ? '' : ' editor-body--no-toc'}`}>
         {/* 阅读模式 Markdown */}
         {!isEditing && displayFormat === 'markdown' && (
-          <div key="reading-md" className="editor-reading">
-            {headings.length > 0 && (
-              <div className="toc-sidebar">
-                <div className="toc-title">目录</div>
-                {headings.map((h, i) => (
-                  <div
-                    key={i}
-                    className={`toc-item toc-level-${h.level}`}
-                    onClick={() => handleTocClick(h.slug)}
-                  >
-                    {h.text}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div
-              className="markdown-preview reading-preview"
-              ref={setPreviewRef}
-            />
-          </div>
+          <div
+            key="reading-md"
+            className="markdown-preview reading-preview"
+            ref={setPreviewRef}
+          />
         )}
 
         {/* 阅读模式 纯文本 */}
@@ -288,37 +305,21 @@ export default function Editor({
 
         {/* 编辑模式 Markdown */}
         {isEditing && displayFormat === 'markdown' && (
-          <>
-            <div key="editing-md" className="editor-split">
-              <textarea
-                ref={textareaRef}
-                className="editor-textarea"
-                value={displayContent}
-                onChange={(e) => onContentChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="在此编写 Markdown..."
-                readOnly={!!previewVersion}
-              />
-              <div
-                className="markdown-preview"
-                ref={setPreviewRef}
-              />
-            </div>
-            {headings.length > 0 && (
-              <div className="toc-sidebar">
-                <div className="toc-title">目录</div>
-                {headings.map((h, i) => (
-                  <div
-                    key={i}
-                    className={`toc-item toc-level-${h.level}`}
-                    onClick={() => handleTocClick(h.slug)}
-                  >
-                    {h.text}
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+          <div key="editing-md" className="editor-split">
+            <textarea
+              ref={textareaRef}
+              className="editor-textarea"
+              value={displayContent}
+              onChange={(e) => onContentChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="在此编写 Markdown..."
+              readOnly={!!previewVersion}
+            />
+            <div
+              className="markdown-preview"
+              ref={setPreviewRef}
+            />
+          </div>
         )}
 
         {/* 编辑模式 纯文本 */}
@@ -370,7 +371,16 @@ export default function Editor({
                   className={`version-item ${previewVersion?.id === v.id ? 'active' : ''}`}
                   onClick={() => setPreviewVersion(v)}
                 >
-                  <div className="version-item-title">{v.title}</div>
+                  <div className="version-item-row">
+                    <div className="version-item-title">{v.title}</div>
+                    <button
+                      className="version-item-delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteVersion(v.id); }}
+                      title="删除版本"
+                    >
+                      &times;
+                    </button>
+                  </div>
                   <div className="version-item-meta">
                     <span>{new Date(v.saved_at + 'Z').toLocaleString('zh-CN')}</span>
                     <span className="version-format-badge">

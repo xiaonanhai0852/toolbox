@@ -1,12 +1,9 @@
 import SearchBar from './SearchBar';
 import NoteList from './NoteList';
-import FolderTree from './FolderTree';
 
 export default function Sidebar({
   notes,
   selectedNoteId,
-  folders,
-  selectedFolderId,
   pagination,
   sort,
   order,
@@ -16,9 +13,6 @@ export default function Sidebar({
   onSearch,
   onSortChange,
   onPageChange,
-  onSelectFolder,
-  onFolderChange,
-  onDropNote,
 }) {
   const { page, totalPages } = pagination;
 
@@ -46,14 +40,6 @@ export default function Sidebar({
           + 新建笔记
         </button>
       </div>
-
-      <FolderTree
-        folders={folders}
-        selectedFolderId={selectedFolderId}
-        onSelectFolder={onSelectFolder}
-        onFolderChange={onFolderChange}
-        onDropNote={onDropNote}
-      />
 
       <NoteList
         notes={notes}

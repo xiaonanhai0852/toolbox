@@ -41,6 +41,7 @@ export default function LoginPage() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="请输入用户名或邮箱"
               required
               autoFocus
             />
@@ -52,6 +53,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="请输入密码"
               required
             />
           </div>

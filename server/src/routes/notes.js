@@ -285,6 +285,32 @@ router.get('/:id/versions/:versionId', (req, res, next) => {
   }
 });
 
+router.delete('/:id/versions/:versionId', (req, res, next) => {
+  try {
+    const note = db.prepare(
+      'SELECT id FROM notes WHERE id = ? AND user_id = ?'
+    ).get(req.params.id, req.user.userId);
+
+    if (!note) {
+      throw new AppError(404, '笔记不存在。');
+    }
+
+    const version = db.prepare(
+      'SELECT id FROM note_versions WHERE id = ? AND note_id = ?'
+    ).get(req.params.versionId, req.params.id);
+
+    if (!version) {
+      throw new AppError(404, '版本不存在。');
+    }
+
+    db.prepare('DELETE FROM note_versions WHERE id = ?').run(req.params.versionId);
+
+    res.json({ success: true, message: '版本已删除。' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:id/versions/:versionId/restore', (req, res, next) => {
   try {
     const note = db.prepare(

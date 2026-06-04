@@ -12,6 +12,7 @@ const NotePanel = memo(function NotePanel({
   isBatchMode,
   selectedNoteIds,
   folders,
+  folderPanelCollapsed,
   onSelectNote,
   onCreateNote,
   onDeleteNote,
@@ -24,6 +25,7 @@ const NotePanel = memo(function NotePanel({
   onDeselectAll,
   onBatchMove,
   onBatchDelete,
+  onToggleFolderPanel,
 }) {
   const { page, totalPages } = pagination;
 
@@ -48,7 +50,14 @@ const NotePanel = memo(function NotePanel({
         />
       ) : (
         <div className="note-panel-header">
-          <h2>笔记</h2>
+          <div className="note-panel-header-top">
+            {folderPanelCollapsed && (
+              <button className="btn-toggle-folder" onClick={onToggleFolderPanel} title="展开文件夹">
+                ›
+              </button>
+            )}
+            <h2>笔记</h2>
+          </div>
           <div className="sort-row">
             <select
               className="sort-select"

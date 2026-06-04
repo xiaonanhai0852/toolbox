@@ -400,13 +400,6 @@ export default function NotesLayout() {
         onToggleCollapse={() => setFolderPanelCollapsed(!folderPanelCollapsed)}
         totalNoteCount={allNotesCount}
       />
-      <div
-        className="folder-panel-collapse-toggle"
-        title="展开文件夹面板"
-        onClick={() => setFolderPanelCollapsed(false)}
-      >
-        ›
-      </div>
       <NotePanel
         notes={notes}
         selectedNoteId={selectedNote?.id}
@@ -417,6 +410,7 @@ export default function NotesLayout() {
         isBatchMode={isBatchMode}
         selectedNoteIds={selectedNoteIds}
         folders={folders}
+        folderPanelCollapsed={folderPanelCollapsed}
         onSelectNote={handleSelectNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
@@ -429,6 +423,7 @@ export default function NotesLayout() {
         onDeselectAll={handleDeselectAll}
         onBatchMove={handleBatchMove}
         onBatchDelete={handleBatchDelete}
+        onToggleFolderPanel={() => setFolderPanelCollapsed(false)}
       />
       <Editor
         note={selectedNote}

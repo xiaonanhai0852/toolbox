@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { post, put, del } from '../../../shared/api/client';
 
 const ALL_NOTES_HOVER_ID = 'all';
@@ -17,6 +17,14 @@ export default function FolderPanel({
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [dragOverFolderId, setDragOverFolderId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
+
+  const showToast = useCallback((message) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(message);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2000);
+  }, []);
 
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim()) return;
@@ -74,8 +82,12 @@ export default function FolderPanel({
     const noteId = e.dataTransfer.getData('text/note-id');
     if (noteId) {
       onDropNote(parseInt(noteId), folderId);
+      const folderName = folderId === null
+        ? '全部笔记'
+        : (folders.find(f => f.id === folderId)?.name || '文件夹');
+      showToast(`已移至「${folderName}」`);
     }
-  }, [onDropNote]);
+  }, [onDropNote, folders, showToast]);
 
   return (
     <div className="folder-panel">
@@ -195,6 +207,13 @@ export default function FolderPanel({
           + 新建文件夹
         </button>
       </div>
+
+      {toast && (
+        <div className="drag-toast" key={toast}>
+          <span className="drag-toast-icon">&#10003;</span>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

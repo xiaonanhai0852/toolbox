@@ -408,7 +408,8 @@
   background: var(--color-primary-faint);
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
-  opacity: 0.9;
+  transform: translateX(2px);
+  transition: background 50ms ease-out, outline 50ms ease-out, transform 50ms ease-out;
 }
 
 .folder-panel-item-icon {
@@ -679,6 +680,71 @@
   color: var(--color-danger);
   font-size: 0.8125rem;
   font-weight: 600;
+}
+
+/* ── Drag states ── */
+.note-item.dragging {
+  opacity: 0.4;
+  transition: opacity 100ms var(--ease-in);
+  pointer-events: none;
+  user-select: none;
+}
+
+.drag-preview {
+  position: fixed;
+  top: -100px;
+  left: -100px;
+  padding: 0.375rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Drag toast ── */
+.drag-toast {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-success, #16a34a);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  text-align: center;
+  animation: toast-fade-in 200ms ease-out;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.drag-toast-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+@keyframes toast-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sidebar-pagination {

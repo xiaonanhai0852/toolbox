@@ -1,4 +1,8 @@
+import { useRef } from 'react';
+
 export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
+  const dragRef = useRef(null);
+
   const date = new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
     month: 'short',
     day: 'numeric',
@@ -13,16 +17,24 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
   function handleDragStart(e) {
     e.dataTransfer.setData('text/note-id', note.id.toString());
     e.dataTransfer.effectAllowed = 'move';
-    e.target.style.opacity = '0.5';
+    e.target.classList.add('dragging');
+
+    const preview = document.createElement('div');
+    preview.className = 'drag-preview';
+    preview.textContent = note.title || '未命名';
+    document.body.appendChild(preview);
+    e.dataTransfer.setDragImage(preview, 10, 10);
+    requestAnimationFrame(() => preview.remove());
   }
 
   function handleDragEnd(e) {
-    e.target.style.opacity = '';
+    e.target.classList.remove('dragging');
   }
 
   return (
     <div
-      className={`note-item ${isSelected ? 'selected' : ''}`}
+      ref={dragRef}
+      className={`note-item${isSelected ? ' selected' : ''}`}
       onClick={() => onSelect(note.id)}
       draggable
       onDragStart={handleDragStart}

@@ -53,7 +53,7 @@ const NotePanel = memo(function NotePanel({
           <div className="note-panel-header-top">
             {folderPanelCollapsed && (
               <button className="btn-toggle-folder" onClick={onToggleFolderPanel} title="展开文件夹">
-                ›
+                📁
               </button>
             )}
             <h2>笔记</h2>

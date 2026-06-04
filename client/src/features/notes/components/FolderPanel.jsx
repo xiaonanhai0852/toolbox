@@ -113,7 +113,7 @@ const FolderPanel = memo(function FolderPanel({
           title="折叠文件夹面板"
           onClick={onToggleCollapse}
         >
-          ‹
+          📁
         </button>
       </div>
 

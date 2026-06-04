@@ -108,22 +108,13 @@ const FolderPanel = memo(function FolderPanel({
     <div className="folder-panel">
       <div className="folder-panel-header">
         <span className="folder-panel-title">文件夹</span>
-        <div style={{ display: 'flex', gap: '0.125rem' }}>
-          <button
-            className="folder-add-btn"
-            title="新建文件夹"
-            onClick={handleStartCreate}
-          >
-            +
-          </button>
-          <button
-            className="folder-collapse-btn"
-            title="折叠文件夹面板"
-            onClick={onToggleCollapse}
-          >
-            ‹
-          </button>
-        </div>
+        <button
+          className="folder-collapse-btn"
+          title="折叠文件夹面板"
+          onClick={onToggleCollapse}
+        >
+          ‹
+        </button>
       </div>
 
       <div className="folder-panel-search">

@@ -68,8 +68,8 @@ const NotePanel = memo(function NotePanel({
             <button className="btn-new-note" onClick={onCreateNote}>
               + 新建笔记
             </button>
-            <button className="btn-batch-mode" onClick={onEnterBatchMode}>
-              批量操作
+            <button className="btn-batch-mode" onClick={onEnterBatchMode} title="批量操作">
+              ☑
             </button>
           </div>
         </div>

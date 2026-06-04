@@ -397,7 +397,7 @@ export default function NotesLayout() {
         onDropNote={handleDropNote}
         onSearch={handleSearch}
         collapsed={folderPanelCollapsed}
-        onToggleCollapse={() => setFolderPanelCollapsed(true)}
+        onToggleCollapse={() => setFolderPanelCollapsed(!folderPanelCollapsed)}
         totalNoteCount={allNotesCount}
       />
       <div

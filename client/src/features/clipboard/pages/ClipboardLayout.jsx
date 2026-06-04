@@ -97,11 +97,12 @@ export default function ClipboardLayout() {
 
   const captureOnce = useCallback(async () => {
     try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) return;
+
       let content;
       try {
         content = await navigator.clipboard.readText();
       } catch {
-        // 权限被拒绝或浏览器不支持
         return;
       }
       if (!content || !content.trim()) return;
@@ -116,8 +117,11 @@ export default function ClipboardLayout() {
     }
   }, [fetchDates]);
 
-  // 首次需要用户点击授权剪贴板权限
   const handleCapture = useCallback(async () => {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      setError('当前环境不支持剪贴板访问，请使用 HTTPS 或 localhost');
+      return;
+    }
     setCapturing(true);
     try {
       const content = await navigator.clipboard.readText();

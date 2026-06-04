@@ -429,6 +429,71 @@
   background: var(--color-primary-faint);
 }
 
+/* ── Note Panel — floating island for note list ── */
+.note-panel {
+  position: fixed;
+  top: 64px;
+  left: 264px;
+  bottom: 12px;
+  width: 280px;
+  z-index: 20;
+  background: var(--surface);
+  backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+  -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.note-panel-header {
+  padding: 0.875rem 1rem;
+  border-bottom: 0.5px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.note-panel-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+}
+
+.note-panel-pagination {
+  padding: 0.5rem 0.75rem;
+  border-top: 0.5px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.note-panel-pagination button {
+  background: var(--bg-subtle);
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  transition: all 0.12s var(--ease-out);
+}
+
+.note-panel-pagination button:hover:not(:disabled) {
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+}
+
+.note-panel-pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* ── Note list ── */
 .note-list {
   flex: 1;
@@ -445,6 +510,7 @@
 
 .note-item {
   padding: 0.5rem 0.75rem;
+  min-height: 48px;
   border-radius: var(--radius);
   cursor: pointer;
   display: flex;

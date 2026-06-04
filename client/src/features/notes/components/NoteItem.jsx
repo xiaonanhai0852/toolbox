@@ -13,6 +13,11 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
   function handleDragStart(e) {
     e.dataTransfer.setData('text/note-id', note.id.toString());
     e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.5';
+  }
+
+  function handleDragEnd(e) {
+    e.target.style.opacity = '';
   }
 
   return (
@@ -21,6 +26,7 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete }) {
       onClick={() => onSelect(note.id)}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
       <div className="note-item-content">
         <div className="note-item-title">{note.title || '未命名'}</div>

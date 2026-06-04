@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/notes.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { get, post, put, del } from '../../../shared/api/client';
-import Sidebar from '../components/Sidebar';
+import NotePanel from '../components/NotePanel';
 import FolderPanel from '../components/FolderPanel';
 import Editor from '../components/Editor';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -306,7 +306,7 @@ export default function NotesLayout() {
         onFolderChange={fetchFolders}
         onDropNote={handleDropNote}
       />
-      <Sidebar
+      <NotePanel
         notes={notes}
         selectedNoteId={selectedNote?.id}
         pagination={pagination}

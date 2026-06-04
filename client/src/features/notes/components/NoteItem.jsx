@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, memo, useCallback, useMemo } from 'react';
 
-export default function NoteItem({
+const NoteItem = memo(function NoteItem({
   note,
   isSelected,
   isBatchMode,
@@ -14,42 +14,49 @@ export default function NoteItem({
   const dragRef = useRef(null);
   const longPressTimer = useRef(null);
 
-  const date = new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const date = useMemo(
+    () => new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
+    [note.updated_at],
+  );
 
-  function renderHighlightedTitle(title) {
-    if (!searchTerm || !title) return title || '未命名';
+  const titleRegex = useMemo(() => {
+    if (!searchTerm || !note.title) return null;
     const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escaped})`, 'gi');
-    const parts = title.split(regex);
-    const testRegex = new RegExp(`^${escaped}$`, 'i');
-    return parts.map((part, i) =>
-      testRegex.test(part) ? <mark key={i} className="search-highlight">{part}</mark> : part
-    );
-  }
+    return new RegExp(`(${escaped})`, 'gi');
+  }, [searchTerm, note.title]);
 
-  function handleDelete(e) {
+  const renderedTitle = useMemo(() => {
+    if (!titleRegex || !note.title) return note.title || '未命名';
+    const parts = note.title.split(titleRegex);
+    const testRegex = new RegExp(`^${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    return parts.map((part, i) =>
+      testRegex.test(part) ? <mark key={i} className="search-highlight">{part}</mark> : part,
+    );
+  }, [titleRegex, note.title, searchTerm]);
+
+  const handleDelete = useCallback((e) => {
     e.stopPropagation();
     onDelete(note.id);
-  }
+  }, [onDelete, note.id]);
 
-  function handleClick() {
+  const handleClick = useCallback(() => {
     if (isBatchMode) {
       onBatchToggle(note.id);
     } else {
       onSelect(note.id);
     }
-  }
+  }, [isBatchMode, onBatchToggle, onSelect, note.id]);
 
-  function handleCheckboxChange(e) {
+  const handleCheckboxChange = useCallback((e) => {
     e.stopPropagation();
     onBatchToggle(note.id);
-  }
+  }, [onBatchToggle, note.id]);
 
-  function handleDragStart(e) {
+  const handleDragStart = useCallback((e) => {
     e.dataTransfer.setData('text/note-id', note.id.toString());
     e.dataTransfer.effectAllowed = 'move';
     e.target.classList.add('dragging');
@@ -60,27 +67,27 @@ export default function NoteItem({
     document.body.appendChild(preview);
     e.dataTransfer.setDragImage(preview, 10, 10);
     requestAnimationFrame(() => preview.remove());
-  }
+  }, [note.id, note.title]);
 
-  function handleDragEnd(e) {
+  const handleDragEnd = useCallback((e) => {
     e.target.classList.remove('dragging');
-  }
+  }, []);
 
-  function handlePointerDown() {
+  const handlePointerDown = useCallback(() => {
     longPressTimer.current = setTimeout(() => {
       if (!isBatchMode) {
         if (onEnterBatchMode) onEnterBatchMode();
         onBatchToggle(note.id);
       }
     }, 600);
-  }
+  }, [isBatchMode, onEnterBatchMode, onBatchToggle, note.id]);
 
-  function handlePointerUp() {
+  const handlePointerUp = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-  }
+  }, []);
 
   return (
     <div
@@ -104,7 +111,7 @@ export default function NoteItem({
         </label>
       )}
       <div className="note-item-content">
-        <div className="note-item-title">{renderHighlightedTitle(note.title)}</div>
+        <div className="note-item-title">{renderedTitle}</div>
         <div className="note-item-date">{date}</div>
       </div>
       {!isBatchMode && (
@@ -118,4 +125,6 @@ export default function NoteItem({
       )}
     </div>
   );
-}
+});
+
+export default NoteItem;

@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import NoteItem from './NoteItem';
 
-export default function NoteList({
+const NoteList = memo(function NoteList({
   notes,
   selectedNoteId,
   isBatchMode,
@@ -37,4 +38,6 @@ export default function NoteList({
       ))}
     </div>
   );
-}
+});
+
+export default NoteList;

@@ -1,7 +1,8 @@
+import { memo, useMemo } from 'react';
 import NoteList from './NoteList';
 import BatchToolbar from './BatchToolbar';
 
-export default function NotePanel({
+const NotePanel = memo(function NotePanel({
   notes,
   selectedNoteId,
   pagination,
@@ -26,13 +27,18 @@ export default function NotePanel({
 }) {
   const { page, totalPages } = pagination;
 
+  const allSelected = useMemo(
+    () => notes.length > 0 && notes.every((n) => selectedNoteIds.has(n.id)),
+    [notes, selectedNoteIds],
+  );
+
   return (
     <div className={`note-panel${isBatchMode ? ' batch-mode' : ''}`}>
       {isBatchMode ? (
         <BatchToolbar
           selectedCount={selectedNoteIds.size}
           totalCount={notes.length}
-          allSelected={notes.length > 0 && notes.every((n) => selectedNoteIds.has(n.id))}
+          allSelected={allSelected}
           folders={folders}
           onSelectAll={onSelectAll}
           onDeselectAll={onDeselectAll}
@@ -100,4 +106,6 @@ export default function NotePanel({
       )}
     </div>
   );
-}
+});
+
+export default NotePanel;

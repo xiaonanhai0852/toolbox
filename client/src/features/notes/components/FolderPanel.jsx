@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, memo } from 'react';
 import { post, put, del } from '../../../shared/api/client';
 import SearchBar from './SearchBar';
 
 const ALL_NOTES_HOVER_ID = 'all';
 
-export default function FolderPanel({
+const FolderPanel = memo(function FolderPanel({
   folders,
   selectedFolderId,
   onSelectFolder,
@@ -66,10 +66,11 @@ export default function FolderPanel({
     }
   }, [selectedFolderId, onSelectFolder, onFolderChange]);
 
-  const handleDragOver = useCallback((e, folderId) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOverFolderId(folderId);
+    const folderId = e.currentTarget.dataset.folderId;
+    setDragOverFolderId(folderId === 'null' ? null : folderId ? parseInt(folderId) : ALL_NOTES_HOVER_ID);
   }, []);
 
   const handleDragLeave = useCallback((e) => {
@@ -78,11 +79,13 @@ export default function FolderPanel({
     setDragOverFolderId(null);
   }, []);
 
-  const handleDrop = useCallback((e, folderId) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragOverFolderId(null);
     const noteId = e.dataTransfer.getData('text/note-id');
+    const folderIdStr = e.currentTarget.dataset.folderId;
+    const folderId = folderIdStr === 'null' ? null : folderIdStr ? parseInt(folderIdStr) : null;
     if (noteId) {
       onDropNote(parseInt(noteId), folderId);
       const folderName = folderId === null
@@ -92,6 +95,15 @@ export default function FolderPanel({
     }
   }, [onDropNote, folders, showToast]);
 
+  const handleStartCreate = useCallback(() => {
+    setCreatingFolder(true);
+    setNewFolderName('');
+  }, []);
+
+  const handleToggleFolder = useCallback((folderId) => {
+    onSelectFolder(selectedFolderId === folderId ? null : folderId);
+  }, [selectedFolderId, onSelectFolder]);
+
   return (
     <div className="folder-panel">
       <div className="folder-panel-header">
@@ -100,7 +112,7 @@ export default function FolderPanel({
           <button
             className="folder-add-btn"
             title="新建文件夹"
-            onClick={() => { setCreatingFolder(true); setNewFolderName(''); }}
+            onClick={handleStartCreate}
           >
             +
           </button>
@@ -122,9 +134,10 @@ export default function FolderPanel({
         <div
           className={`folder-panel-item ${selectedFolderId === null ? 'selected' : ''} ${dragOverFolderId === ALL_NOTES_HOVER_ID ? 'drag-over' : ''}`}
           onClick={() => onSelectFolder(null)}
-          onDragOver={(e) => handleDragOver(e, ALL_NOTES_HOVER_ID)}
+          data-folder-id="null"
+          onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, null)}
+          onDrop={handleDrop}
         >
           <span className="folder-panel-item-icon">📋</span>
           <span className="folder-panel-item-name" title="全部笔记">全部笔记</span>
@@ -155,10 +168,11 @@ export default function FolderPanel({
             <div
               key={folder.id}
               className={`folder-panel-item ${isSelected ? 'selected' : ''} ${isDragOver ? 'drag-over' : ''}`}
-              onClick={() => onSelectFolder(isSelected ? null : folder.id)}
-              onDragOver={(e) => handleDragOver(e, folder.id)}
+              data-folder-id={folder.id}
+              onClick={() => handleToggleFolder(folder.id)}
+              onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, folder.id)}
+              onDrop={handleDrop}
             >
               <span className="folder-panel-item-icon">📁</span>
 
@@ -211,7 +225,7 @@ export default function FolderPanel({
       <div className="folder-panel-footer">
         <button
           className="folder-add-root-btn"
-          onClick={() => { setCreatingFolder(true); setNewFolderName(''); }}
+          onClick={handleStartCreate}
         >
           + 新建文件夹
         </button>
@@ -225,4 +239,6 @@ export default function FolderPanel({
       )}
     </div>
   );
-}
+});
+
+export default FolderPanel;

@@ -351,6 +351,7 @@
   transform: translateX(-12px);
   border-width: 0;
   pointer-events: none;
+  will-change: width, opacity, transform;
 }
 
 .folder-panel-header {
@@ -905,6 +906,7 @@
   transition: opacity 100ms var(--ease-in);
   pointer-events: none;
   user-select: none;
+  will-change: opacity;
 }
 
 .drag-preview {
@@ -2013,5 +2015,18 @@
   /* ── Show bottom nav ── */
   .mobile-bottom-nav {
     display: flex;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   Reduced Motion — disable animations for users who prefer it
+   ══════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -171,7 +171,7 @@ export default function NotesLayout() {
     };
   }, []);
 
-  async function handleSelectNote(noteId) {
+  const handleSelectNote = useCallback(async (noteId) => {
     if (selectedNote && selectedNote.id !== noteId) {
       await flushSave();
       if (hasChangesRef.current && selectedNote.id) {
@@ -187,9 +187,9 @@ export default function NotesLayout() {
     if (window.innerWidth < 768) {
       setMobileView('editor');
     }
-  }
+  }, [selectedNote, flushSave, navigate]);
 
-  async function handleCreateNote() {
+  const handleCreateNote = useCallback(async () => {
     await flushSave();
     try {
       const data = await post('/api/notes', { title: '未命名', content: '', format: 'markdown' });
@@ -205,13 +205,13 @@ export default function NotesLayout() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, [flushSave, fetchNotes, fetchFolders, navigate]);
 
-  function handleDeleteNote(noteId) {
+  const handleDeleteNote = useCallback((noteId) => {
     setDeleteTargetId(noteId);
-  }
+  }, []);
 
-  async function confirmDelete() {
+  const confirmDelete = useCallback(async () => {
     const noteId = deleteTargetId;
     setDeleteTargetId(null);
     await flushSave();
@@ -228,9 +228,9 @@ export default function NotesLayout() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, [deleteTargetId, flushSave, selectedNote, navigate, fetchNotes, fetchFolders]);
 
-  function handleTitleChange(newTitle) {
+  const handleTitleChange = useCallback((newTitle) => {
     hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
@@ -238,9 +238,9 @@ export default function NotesLayout() {
       doSave(updated);
       return updated;
     });
-  }
+  }, [doSave]);
 
-  function handleContentChange(newContent) {
+  const handleContentChange = useCallback((newContent) => {
     hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
@@ -248,9 +248,9 @@ export default function NotesLayout() {
       doSave(updated);
       return updated;
     });
-  }
+  }, [doSave]);
 
-  function handleFormatChange(newFormat) {
+  const handleFormatChange = useCallback((newFormat) => {
     hasChangesRef.current = true;
     setSelectedNote((prev) => {
       if (!prev) return prev;
@@ -258,9 +258,9 @@ export default function NotesLayout() {
       doSave(updated);
       return updated;
     });
-  }
+  }, [doSave]);
 
-  async function handleExitEdit() {
+  const handleExitEdit = useCallback(async () => {
     if (selectedNote && hasChangesRef.current) {
       await flushSave();
       try {
@@ -270,22 +270,22 @@ export default function NotesLayout() {
       }
       hasChangesRef.current = false;
     }
-  }
+  }, [selectedNote, flushSave]);
 
-  function handleSearch(term) {
+  const handleSearch = useCallback((term) => {
     setSearchTerm(term);
     setPage(1);
-  }
+  }, []);
 
-  function handleSortChange(newSort, newOrder) {
+  const handleSortChange = useCallback((newSort, newOrder) => {
     setSort(newSort);
     setOrder(newOrder);
     setPage(1);
     skipEffectRef.current = true;
     fetchNotes({ page: 1, sort: newSort, order: newOrder });
-  }
+  }, [fetchNotes]);
 
-  function handleSelectFolder(folderId) {
+  const handleSelectFolder = useCallback((folderId) => {
     setSelectedFolderId(folderId);
     folderIdRef.current = folderId;
     setPage(1);
@@ -294,9 +294,9 @@ export default function NotesLayout() {
     if (window.innerWidth < 768) {
       setMobileView('notes');
     }
-  }
+  }, [fetchNotes]);
 
-  async function handleDropNote(noteId, folderId) {
+  const handleDropNote = useCallback(async (noteId, folderId) => {
     try {
       await put(`/api/notes/${noteId}`, { folder_id: folderId });
       fetchNotes();
@@ -307,21 +307,21 @@ export default function NotesLayout() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, [fetchNotes, fetchFolders, selectedNote]);
 
   // 批量操作
 
-  function handleEnterBatchMode() {
+  const handleEnterBatchMode = useCallback(() => {
     setIsBatchMode(true);
     setSelectedNoteIds(new Set());
-  }
+  }, []);
 
-  function handleExitBatchMode() {
+  const handleExitBatchMode = useCallback(() => {
     setIsBatchMode(false);
     setSelectedNoteIds(new Set());
-  }
+  }, []);
 
-  function handleBatchToggle(noteId) {
+  const handleBatchToggle = useCallback((noteId) => {
     setSelectedNoteIds((prev) => {
       const next = new Set(prev);
       if (next.has(noteId)) {
@@ -331,17 +331,17 @@ export default function NotesLayout() {
       }
       return next;
     });
-  }
+  }, []);
 
-  function handleSelectAll() {
+  const handleSelectAll = useCallback(() => {
     setSelectedNoteIds(new Set(notes.map((n) => n.id)));
-  }
+  }, [notes]);
 
-  function handleDeselectAll() {
+  const handleDeselectAll = useCallback(() => {
     setSelectedNoteIds(new Set());
-  }
+  }, []);
 
-  async function handleBatchMove(folderId) {
+  const handleBatchMove = useCallback(async (folderId) => {
     const ids = Array.from(selectedNoteIds);
     try {
       await post('/api/notes/batch-move', { noteIds: ids, folderId });
@@ -351,13 +351,13 @@ export default function NotesLayout() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, [selectedNoteIds, handleExitBatchMode, fetchNotes, fetchFolders]);
 
-  function handleBatchDelete() {
+  const handleBatchDelete = useCallback(() => {
     setBatchDeleteConfirm(true);
-  }
+  }, []);
 
-  async function confirmBatchDelete() {
+  const confirmBatchDelete = useCallback(async () => {
     const ids = Array.from(selectedNoteIds);
     setBatchDeleteConfirm(false);
     await flushSave();
@@ -374,7 +374,7 @@ export default function NotesLayout() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, [selectedNoteIds, flushSave, selectedNote, navigate, handleExitBatchMode, fetchNotes, fetchFolders]);
 
   return (
     <div className={`app-layout${folderPanelCollapsed ? ' folder-panel-collapsed' : ''} mobile-view-${mobileView}`}>

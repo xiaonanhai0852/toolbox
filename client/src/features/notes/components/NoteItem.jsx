@@ -1,7 +1,17 @@
 import { useRef } from 'react';
 
-export default function NoteItem({ note, isSelected, onSelect, onDelete, searchTerm }) {
+export default function NoteItem({
+  note,
+  isSelected,
+  isBatchMode,
+  isBatchSelected,
+  onSelect,
+  onDelete,
+  onBatchToggle,
+  searchTerm,
+}) {
   const dragRef = useRef(null);
+  const longPressTimer = useRef(null);
 
   const date = new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
     month: 'short',
@@ -25,6 +35,19 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete, searchT
     onDelete(note.id);
   }
 
+  function handleClick() {
+    if (isBatchMode) {
+      onBatchToggle(note.id);
+    } else {
+      onSelect(note.id);
+    }
+  }
+
+  function handleCheckboxChange(e) {
+    e.stopPropagation();
+    onBatchToggle(note.id);
+  }
+
   function handleDragStart(e) {
     e.dataTransfer.setData('text/note-id', note.id.toString());
     e.dataTransfer.effectAllowed = 'move';
@@ -42,26 +65,55 @@ export default function NoteItem({ note, isSelected, onSelect, onDelete, searchT
     e.target.classList.remove('dragging');
   }
 
+  function handlePointerDown() {
+    longPressTimer.current = setTimeout(() => {
+      if (!isBatchMode) {
+        onBatchToggle(note.id);
+      }
+    }, 600);
+  }
+
+  function handlePointerUp() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
   return (
     <div
       ref={dragRef}
-      className={`note-item${isSelected ? ' selected' : ''}`}
-      onClick={() => onSelect(note.id)}
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      className={`note-item${isSelected ? ' selected' : ''}${isBatchSelected ? ' batch-selected' : ''}`}
+      onClick={handleClick}
+      draggable={!isBatchMode}
+      onDragStart={!isBatchMode ? handleDragStart : undefined}
+      onDragEnd={!isBatchMode ? handleDragEnd : undefined}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
     >
+      {isBatchMode && (
+        <label className="note-item-checkbox" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isBatchSelected}
+            onChange={handleCheckboxChange}
+          />
+        </label>
+      )}
       <div className="note-item-content">
         <div className="note-item-title">{renderHighlightedTitle(note.title)}</div>
         <div className="note-item-date">{date}</div>
       </div>
-      <button
-        className="note-item-delete"
-        onClick={handleDelete}
-        title="删除笔记"
-      >
-        &times;
-      </button>
+      {!isBatchMode && (
+        <button
+          className="note-item-delete"
+          onClick={handleDelete}
+          title="删除笔记"
+        >
+          &times;
+        </button>
+      )}
     </div>
   );
 }

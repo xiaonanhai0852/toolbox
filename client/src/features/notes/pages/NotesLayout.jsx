@@ -23,6 +23,9 @@ export default function NotesLayout() {
   const [sort, setSort] = useState('updated_at');
   const [order, setOrder] = useState('desc');
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [batchDeleteConfirm, setBatchDeleteConfirm] = useState(false);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedNoteIds, setSelectedNoteIds] = useState(new Set());
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState('notes');
   const [allNotesCount, setAllNotesCount] = useState(0);
@@ -306,6 +309,73 @@ export default function NotesLayout() {
     }
   }
 
+  // 批量操作
+
+  function handleEnterBatchMode() {
+    setIsBatchMode(true);
+    setSelectedNoteIds(new Set());
+  }
+
+  function handleExitBatchMode() {
+    setIsBatchMode(false);
+    setSelectedNoteIds(new Set());
+  }
+
+  function handleBatchToggle(noteId) {
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(noteId)) {
+        next.delete(noteId);
+      } else {
+        next.add(noteId);
+      }
+      return next;
+    });
+  }
+
+  function handleSelectAll() {
+    setSelectedNoteIds(new Set(notes.map((n) => n.id)));
+  }
+
+  function handleDeselectAll() {
+    setSelectedNoteIds(new Set());
+  }
+
+  async function handleBatchMove(folderId) {
+    const ids = Array.from(selectedNoteIds);
+    try {
+      await post('/api/notes/batch-move', { noteIds: ids, folderId });
+      handleExitBatchMode();
+      fetchNotes();
+      fetchFolders();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function handleBatchDelete() {
+    setBatchDeleteConfirm(true);
+  }
+
+  async function confirmBatchDelete() {
+    const ids = Array.from(selectedNoteIds);
+    setBatchDeleteConfirm(false);
+    await flushSave();
+
+    try {
+      await post('/api/notes/batch-delete', { noteIds: ids });
+      if (selectedNote && selectedNoteIds.has(selectedNote.id)) {
+        setSelectedNote(null);
+        navigate('/tools/notes');
+      }
+      handleExitBatchMode();
+      fetchNotes();
+      fetchFolders();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <div className={`app-layout${folderPanelCollapsed ? ' folder-panel-collapsed' : ''} mobile-view-${mobileView}`}>
       {error && (
@@ -344,11 +414,21 @@ export default function NotesLayout() {
         sort={sort}
         order={order}
         searchTerm={searchTerm}
+        isBatchMode={isBatchMode}
+        selectedNoteIds={selectedNoteIds}
+        folders={folders}
         onSelectNote={handleSelectNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
         onSortChange={handleSortChange}
         onPageChange={setPage}
+        onEnterBatchMode={handleEnterBatchMode}
+        onExitBatchMode={handleExitBatchMode}
+        onBatchToggle={handleBatchToggle}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+        onBatchMove={handleBatchMove}
+        onBatchDelete={handleBatchDelete}
       />
       <Editor
         note={selectedNote}
@@ -389,6 +469,15 @@ export default function NotesLayout() {
           message={`确认删除「${notes.find((n) => n.id === deleteTargetId)?.title || '未命名'}」？此操作不可撤销。`}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTargetId(null)}
+        />
+      )}
+
+      {batchDeleteConfirm && (
+        <ConfirmDialog
+          title="批量删除笔记"
+          message={`确认删除选中的 ${selectedNoteIds.size} 篇笔记？此操作不可撤销。`}
+          onConfirm={confirmBatchDelete}
+          onCancel={() => setBatchDeleteConfirm(false)}
         />
       )}
     </div>

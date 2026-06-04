@@ -1,6 +1,15 @@
 import NoteItem from './NoteItem';
 
-export default function NoteList({ notes, selectedNoteId, onSelectNote, onDeleteNote, searchTerm }) {
+export default function NoteList({
+  notes,
+  selectedNoteId,
+  isBatchMode,
+  selectedNoteIds,
+  onSelectNote,
+  onDeleteNote,
+  onBatchToggle,
+  searchTerm,
+}) {
   if (notes.length === 0) {
     return (
       <div className="note-list-empty">
@@ -16,8 +25,11 @@ export default function NoteList({ notes, selectedNoteId, onSelectNote, onDelete
           key={note.id}
           note={note}
           isSelected={note.id === selectedNoteId}
+          isBatchMode={isBatchMode}
+          isBatchSelected={selectedNoteIds.has(note.id)}
           onSelect={onSelectNote}
           onDelete={onDeleteNote}
+          onBatchToggle={onBatchToggle}
           searchTerm={searchTerm}
         />
       ))}

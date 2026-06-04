@@ -714,6 +714,191 @@
   font-weight: 600;
 }
 
+/* ── Batch mode ── */
+.note-panel-header-actions {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.btn-batch-mode {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--bg-subtle);
+  color: var(--color-text-secondary);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out);
+}
+
+.btn-batch-mode:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-text);
+}
+
+.batch-toolbar {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 0.5px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  animation: batch-toolbar-in 0.2s var(--ease-out);
+}
+
+@keyframes batch-toolbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.batch-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  user-select: none;
+  color: var(--color-text-secondary);
+}
+
+.batch-select-all input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.batch-count {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.batch-btn {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s var(--ease-out);
+  white-space: nowrap;
+}
+
+.batch-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.batch-btn-move {
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+}
+
+.batch-btn-move:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.batch-btn-delete {
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger, #dc2626);
+}
+
+.batch-btn-delete:hover:not(:disabled) {
+  background: var(--color-danger, #dc2626);
+  color: #fff;
+}
+
+.batch-btn-cancel {
+  background: var(--bg-subtle);
+  color: var(--color-text-secondary);
+}
+
+.batch-btn-cancel:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-text);
+}
+
+.batch-move-wrapper {
+  position: relative;
+}
+
+.batch-folder-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 140px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface-solid, #fff);
+  border: 0.5px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  animation: menu-slide-in 0.15s var(--ease-out);
+}
+
+@keyframes menu-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.batch-folder-option {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.1s var(--ease-out);
+  color: var(--color-text);
+}
+
+.batch-folder-option:hover {
+  background: var(--color-primary-faint);
+  color: var(--color-primary);
+}
+
+.note-item-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-right: 0.375rem;
+}
+
+.note-item-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.note-item.batch-selected {
+  background: var(--color-primary-faint);
+}
+
 /* ── Drag states ── */
 .note-item.dragging {
   opacity: 0.4;

@@ -212,6 +212,86 @@ router.delete('/:id', (req, res, next) => {
   }
 });
 
+// 批量操作
+
+router.post('/batch-move', (req, res, next) => {
+  try {
+    const { noteIds, folderId } = req.body;
+
+    if (!Array.isArray(noteIds) || noteIds.length === 0) {
+      throw new AppError(400, '请选择要移动的笔记。');
+    }
+
+    if (folderId) {
+      const folder = db.prepare(
+        'SELECT id FROM folders WHERE id = ? AND user_id = ?'
+      ).get(folderId, req.user.userId);
+
+      if (!folder) {
+        throw new AppError(404, '目标文件夹不存在。');
+      }
+    }
+
+    const placeholders = noteIds.map(() => '?').join(',');
+    const existing = db.prepare(
+      `SELECT id FROM notes WHERE id IN (${placeholders}) AND user_id = ?`
+    ).all(...noteIds, req.user.userId);
+
+    if (existing.length !== noteIds.length) {
+      throw new AppError(400, '部分笔记不存在或无权操作。');
+    }
+
+    const stmt = db.prepare(
+      'UPDATE notes SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?'
+    );
+
+    const moveMany = db.transaction((ids) => {
+      for (const id of ids) {
+        stmt.run(folderId || null, id, req.user.userId);
+      }
+    });
+
+    moveMany(noteIds);
+
+    res.json({ success: true, data: { moved: noteIds.length } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/batch-delete', (req, res, next) => {
+  try {
+    const { noteIds } = req.body;
+
+    if (!Array.isArray(noteIds) || noteIds.length === 0) {
+      throw new AppError(400, '请选择要删除的笔记。');
+    }
+
+    const placeholders = noteIds.map(() => '?').join(',');
+    const existing = db.prepare(
+      `SELECT id FROM notes WHERE id IN (${placeholders}) AND user_id = ?`
+    ).all(...noteIds, req.user.userId);
+
+    if (existing.length !== noteIds.length) {
+      throw new AppError(400, '部分笔记不存在或无权操作。');
+    }
+
+    const stmt = db.prepare('DELETE FROM notes WHERE id = ? AND user_id = ?');
+
+    const deleteMany = db.transaction((ids) => {
+      for (const id of ids) {
+        stmt.run(id, req.user.userId);
+      }
+    });
+
+    deleteMany(noteIds);
+
+    res.json({ success: true, data: { deleted: noteIds.length } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 版本控制
 
 router.post('/:id/versions', (req, res, next) => {

@@ -11,8 +11,8 @@ const NoteItem = memo(function NoteItem({
   onEnterBatchMode,
   searchTerm,
 }) {
-  const dragRef = useRef(null);
   const longPressTimer = useRef(null);
+  const dragPreviewRef = useRef(null);
 
   const date = useMemo(
     () => new Date(note.updated_at + 'Z').toLocaleDateString('zh-CN', {
@@ -59,18 +59,22 @@ const NoteItem = memo(function NoteItem({
   const handleDragStart = useCallback((e) => {
     e.dataTransfer.setData('text/note-id', note.id.toString());
     e.dataTransfer.effectAllowed = 'move';
-    e.target.classList.add('dragging');
+    e.currentTarget.classList.add('dragging');
 
     const preview = document.createElement('div');
     preview.className = 'drag-preview';
     preview.textContent = note.title || '未命名';
     document.body.appendChild(preview);
     e.dataTransfer.setDragImage(preview, 10, 10);
-    requestAnimationFrame(() => preview.remove());
+    dragPreviewRef.current = preview;
   }, [note.id, note.title]);
 
   const handleDragEnd = useCallback((e) => {
-    e.target.classList.remove('dragging');
+    e.currentTarget.classList.remove('dragging');
+    if (dragPreviewRef.current) {
+      dragPreviewRef.current.remove();
+      dragPreviewRef.current = null;
+    }
   }, []);
 
   const handlePointerDown = useCallback(() => {
@@ -91,7 +95,6 @@ const NoteItem = memo(function NoteItem({
 
   return (
     <div
-      ref={dragRef}
       className={`note-item${isSelected ? ' selected' : ''}${isBatchSelected ? ' batch-selected' : ''}`}
       onClick={handleClick}
       draggable={!isBatchMode}

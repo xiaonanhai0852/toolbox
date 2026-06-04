@@ -647,14 +647,18 @@
   padding: 0.5rem 0.75rem;
   min-height: 48px;
   border-radius: var(--radius);
-  cursor: pointer;
+  cursor: grab;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
   border-left: 3px solid transparent;
-  transition: all 0.12s var(--ease-out);
+  transition: background 0.12s var(--ease-out), border-color 0.12s var(--ease-out);
   user-select: none;
+}
+
+.note-item:active {
+  cursor: grabbing;
 }
 
 .note-item:hover {
@@ -911,10 +915,7 @@
 /* ── Drag states ── */
 .note-item.dragging {
   opacity: 0.4;
-  transition: opacity 100ms var(--ease-in);
-  pointer-events: none;
-  user-select: none;
-  will-change: opacity;
+  cursor: grabbing;
 }
 
 .drag-preview {

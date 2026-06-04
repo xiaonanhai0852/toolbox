@@ -13,6 +13,7 @@ export default function FolderPanel({
   onSearch,
   collapsed,
   onToggleCollapse,
+  totalNoteCount,
 }) {
   const [editingFolderId, setEditingFolderId] = useState(null);
   const [editingName, setEditingName] = useState('');
@@ -127,6 +128,7 @@ export default function FolderPanel({
         >
           <span className="folder-panel-item-icon">📋</span>
           <span className="folder-panel-item-name" title="全部笔记">全部笔记</span>
+          {totalNoteCount > 0 && <span className="folder-panel-item-count">{totalNoteCount}</span>}
         </div>
 
         {creatingFolder && (
@@ -176,6 +178,7 @@ export default function FolderPanel({
               ) : (
                 <span className="folder-panel-item-name" title={folder.name}>{folder.name}</span>
               )}
+              {folder.note_count > 0 && <span className="folder-panel-item-count">{folder.note_count}</span>}
 
               <span className="folder-actions">
                 <button

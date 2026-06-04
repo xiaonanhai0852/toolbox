@@ -9,14 +9,17 @@ router.use(auth);
 
 const MAX_FOLDER_NAME_LENGTH = 100;
 
-// 获取所有文件夹（树形结构）
+// 获取所有文件夹（附带笔记数量）
 router.get('/', (req, res, next) => {
   try {
     const folders = db.prepare(
-      `SELECT id, name, parent_id, created_at, updated_at
-       FROM folders
-       WHERE user_id = ?
-       ORDER BY name`
+      `SELECT f.id, f.name, f.parent_id, f.created_at, f.updated_at,
+              COUNT(n.id) AS note_count
+       FROM folders f
+       LEFT JOIN notes n ON n.folder_id = f.id
+       WHERE f.user_id = ?
+       GROUP BY f.id
+       ORDER BY f.name`
     ).all(req.user.userId);
 
     res.json({ success: true, data: { folders } });

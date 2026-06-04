@@ -25,6 +25,7 @@ export default function NotesLayout() {
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState('notes');
+  const [allNotesCount, setAllNotesCount] = useState(0);
 
   const noteRef = useRef(null);
   const saveTimerRef = useRef(null);
@@ -70,6 +71,9 @@ export default function NotesLayout() {
         if (id === fetchIdRef.current) {
           setNotes(data.notes);
           setPagination(data.pagination);
+          if (f === null || f === undefined) {
+            setAllNotesCount(data.pagination.total);
+          }
         }
       })
       .catch((err) => setError(err.message));
@@ -189,6 +193,8 @@ export default function NotesLayout() {
       setPage(1);
       skipEffectRef.current = true;
       fetchNotes({ page: 1 });
+      fetchFolders();
+      setAllNotesCount((prev) => prev + 1);
       navigate(`/tools/notes/${data.note.id}`);
       if (window.innerWidth < 768) {
         setMobileView('editor');
@@ -214,6 +220,8 @@ export default function NotesLayout() {
         navigate('/tools/notes');
       }
       fetchNotes();
+      fetchFolders();
+      setAllNotesCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       setError(err.message);
     }
@@ -289,6 +297,7 @@ export default function NotesLayout() {
     try {
       await put(`/api/notes/${noteId}`, { folder_id: folderId });
       fetchNotes();
+      fetchFolders();
       if (selectedNote?.id === noteId) {
         setSelectedNote((prev) => prev ? { ...prev, folder_id: folderId } : prev);
       }
@@ -319,6 +328,7 @@ export default function NotesLayout() {
         onSearch={handleSearch}
         collapsed={folderPanelCollapsed}
         onToggleCollapse={() => setFolderPanelCollapsed(true)}
+        totalNoteCount={allNotesCount}
       />
       <div
         className="folder-panel-collapse-toggle"
